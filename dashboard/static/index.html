@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SAP2000 Model Generator</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260625somrepresentative1">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>SAP2000 Model Generator</h1>
+        <p>Betonarme model üretimi, ön eleme kontrolleri ve pushover ayar paneli</p>
+      </div>
+      <div class="actions">
+        <button id="previewBtn" type="button">Önizle</button>
+        <button id="clearBtn" type="button" class="danger">Çıktıları Temizle</button>
+        <button id="stopBtn" type="button" class="danger" disabled>Durdur</button>
+        <button id="runBtn" type="button" class="primary">Üretimi Başlat</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="settings">
+        <nav class="tabs" aria-label="Ayar grupları">
+          <button class="tab active" data-tab="general" type="button">Genel</button>
+          <button class="tab" data-tab="geometry" type="button">Geometri</button>
+          <button class="tab" data-tab="materials" type="button">Malzeme</button>
+          <button class="tab" data-tab="rebar" type="button">Donatı</button>
+          <button class="tab" data-tab="foundation" type="button">Temel/Zemin</button>
+          <button class="tab" data-tab="checks" type="button">Kontrol</button>
+          <button class="tab" data-tab="pushover" type="button">Pushover</button>
+          <button class="tab" data-tab="results" type="button">Sonu&ccedil;lar</button>
+          <button class="tab" data-tab="charts" type="button">Grafikler</button>
+          <button class="tab" data-tab="som" type="button">SOM Analizi</button>
+          <button class="tab" data-tab="machine-learning" type="button">Makine &Ouml;&#287;renmesi</button>
+          <button class="tab" data-tab="prediction" type="button">Tahmin</button>
+        </nav>
+
+        <form id="configForm">
+          <div class="tab-panel active" data-panel="general">
+            <div class="grid two">
+              <label>Model adedi<input name="n_iter" type="number" min="1" step="1"></label>
+              <label>Random seed<input name="random_seed" type="number" step="1"></label>
+              <label>Maksimum deneme<input name="max_attempts_per_model" type="number" min="1" step="1"></label>
+              <label>Çıktı klasörü<input name="output_dir" type="text"></label>
+              <label>SAP2000 exe yolu<input name="sap2000_exe_path" type="text"></label>
+              <label class="check"><input name="keep_sap_open" type="checkbox">SAP2000 açık kalsın</label>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="geometry">
+               <div class="grid three">
+              <label>Kat min
+                <input name="story_count_min" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TBDY kat say&#305;s&#305;n&#305; tek ba&#351;&#305;na s&#305;n&#305;rlamaz; d&uuml;zensizlik ve g&ouml;reli kat &ouml;telemesi ayr&#305;ca kontrol edilir. Yayg&#305;n: 4-8 kat orta katl&#305; sentetik veri aral&#305;&#287;&#305;d&#305;r.</span>
+              </label>
+              <label>Kat max
+                <input name="story_count_max" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kat artt&#305;k&ccedil;a ikinci mertebe, narinlik ve &ouml;teleme kontrolleri kritikle&#351;ir. Yayg&#305;n: 6-8 kat i&ccedil;in daha b&uuml;y&uuml;k kolon ve kiri&#351; kesitleri se&ccedil;ilir.</span>
+              </label>
+              <label>X a&ccedil;&#305;kl&#305;k min
+                <input name="x_bay_count_min" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: D&uuml;zenli ta&#351;&#305;y&#305;c&#305; sistem ve burulma kontrol&uuml; i&ccedil;in iki do&#287;rultuda s&uuml;reklilik istenir. Yayg&#305;n: En az 2, pratikte 3-5 a&ccedil;&#305;kl&#305;k.</span>
+              </label>
+              <label>X a&ccedil;&#305;kl&#305;k max
+                <input name="x_bay_count_max" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Aks say&#305;s&#305; artt&#305;k&ccedil;a plan d&uuml;zensizli&#287;i ve analiz boyutu izlenir. Yayg&#305;n: Parametrik &ccedil;al&#305;&#351;malarda X y&ouml;n&uuml; 3-5 a&ccedil;&#305;kl&#305;k.</span>
+              </label>
+              <label>Y a&ccedil;&#305;kl&#305;k min
+                <input name="y_bay_count_min" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Tek do&#287;rultulu zay&#305;f planlardan ka&ccedil;&#305;nmak i&ccedil;in Y y&ouml;n&uuml;nde de en az 2 a&ccedil;&#305;kl&#305;k tercih edilir. Yayg&#305;n: 2-4 a&ccedil;&#305;kl&#305;k.</span>
+              </label>
+              <label>Y a&ccedil;&#305;kl&#305;k max
+                <input name="y_bay_count_max" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: B&uuml;y&uuml;k/asimetrik planlar burulma d&uuml;zensizli&#287;i kontrol&uuml; gerektirir. Yayg&#305;n: 2-4 a&ccedil;&#305;kl&#305;k dengeli veri seti verir.</span>
+              </label>
+              <label>A&ccedil;&#305;kl&#305;k min m
+                <input name="bay_length_min_m" type="number" min="0" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Minimum a&ccedil;&#305;kl&#305;k do&#287;rudan verilmez; eleman boyutu, rijitlik ve mimari kullan&#305;m ile kontrol edilir. Yayg&#305;n: 4.0 m alt s&#305;n&#305;r.</span>
+              </label>
+              <label>A&ccedil;&#305;kl&#305;k max m
+                <input name="bay_length_max_m" type="number" min="0" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Uzun a&ccedil;&#305;kl&#305;kta sehim ve L/h kontrol&uuml; belirleyicidir; burada L/h &lt;= 15 &ouml;n elemesi uygulan&#305;r. Yayg&#305;n: 6-7 m &uuml;st pratik s&#305;n&#305;r.</span>
+              </label>
+              <label>A&ccedil;&#305;kl&#305;k ad&#305;m&#305; m
+                <input name="bay_length_step_m" type="number" min="0.1" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kod s&#305;n&#305;r&#305; de&#287;ildir; parametrik ayr&#305;kla&#351;t&#305;rma se&ccedil;imidir. Yayg&#305;n: 0.5 m ad&#305;m okunabilir varyasyon sa&#287;lar.</span>
+              </label>
+              <label>Kat y&uuml;ksekli&#287;i min m
+                <input name="story_height_min_m" type="number" min="0" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kat y&uuml;ksekli&#287;i artt&#305;k&ccedil;a g&ouml;reli &ouml;teleme kontrol&uuml; zorla&#351;&#305;r. Yayg&#305;n: Konut/ofis i&ccedil;in 3.0 m civar&#305;.</span>
+              </label>
+              <label>Kat y&uuml;ksekli&#287;i max m
+                <input name="story_height_max_m" type="number" min="0" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Yumu&#351;ak kat ve narinlik etkileri izlenir. Yayg&#305;n: 3.2-3.5 m; daha y&uuml;ksek katlar ayr&#305; kontrol ister.</span>
+              </label>
+              <label>Kat y&uuml;ksekli&#287;i ad&#305;m&#305; m
+                <input name="story_height_step_m" type="number" min="0.1" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kod s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n: 0.1 m ad&#305;m hassas ama okunabilir parametrik de&#287;i&#351;im verir.</span>
+              </label>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>Kolon kesitleri</h2>
+                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY betonarme kolonlarda en k&uuml;&ccedil;&uuml;k boyut i&ccedil;in 30 cm mertebesi alt s&#305;n&#305;r olarak al&#305;n&#305;r; bu yaz&#305;l&#305;mda 30 cm alt&#305; elenir. Perde i&ccedil;in TBDY tan&#305;m&#305; l<sub>w</sub>/t<sub>w</sub> &ge; 6 olup perde g&ouml;vde kal&#305;nl&#305;&#287;&#305; genel durumda kat y&uuml;ksekli&#287;inin 1/16's&#305;ndan ve 250 mm'den k&uuml;&ccedil;&uuml;k al&#305;nmaz. Yayg&#305;n: 4-5 katta 40x40-50x50 cm kolonlar, 6-8 katta 50x50-70x70 cm kolonlar; perdelerde 25-30 cm kal&#305;nl&#305;k ve yakla&#351;&#305;k 1.5-4.0 m uzunluk s&#305;k g&ouml;r&uuml;l&uuml;r.</p>
+                </div>
+                <button id="addColumnSection" type="button">Ekle</button>
+              </div>
+              <table class="section-table" id="columnSections"></table>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>Kiri&#351; kesitleri</h2>
+                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351; geni&#351;li&#287;i i&ccedil;in 25 cm, y&uuml;kseklik i&ccedil;in 50 cm alt s&#305;n&#305;r; ayr&#305;ca L/h &lt;= 15 &ouml;n kontrol&uuml;. Yayg&#305;n: 25x50, 30x50, 30x60, 35x60, 35x70 cm.</p>
+                </div>
+                <button id="addBeamSection" type="button">Ekle</button>
+              </div>
+              <table class="section-table" id="beamSections"></table>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>D&ouml;&#351;eme parametreleri</h2>
+                  <p class="section-note">Bu jenerat&ouml;r kiri&#351;li plak d&ouml;&#351;emeyi her katta ve her aks a&ccedil;&#305;kl&#305;&#287;&#305;nda yatay shell panel olarak modeller. Rijit diyafram atamas&#305; da korunur. Y&ouml;netmelik/&ouml;n eleme: TBDY 2018 B&ouml;l&uuml;m 7.11 d&ouml;&#351;emelerin deprem kuvvetlerini d&uuml;&#351;ey ta&#351;&#305;y&#305;c&#305; elemanlara g&uuml;venle aktarmas&#305;n&#305; ister; kiri&#351;li plak kal&#305;nl&#305;&#287;&#305; i&ccedil;in TS 500 ko&#351;ullar&#305; kullan&#305;l&#305;r. TBDY 7.11.3 kapsam&#305;ndaki elastik diyafram d&uuml;zlem i&ccedil;i gerilme kontrol&uuml; bu a&#351;amada placeholder'd&#305;r; rijit diyaframl&#305; &ouml;n model nihai d&ouml;&#351;eme tasar&#305;m&#305; de&#287;ildir. Yayg&#305;n: Konut/ofis binalar&#305;nda 0.15-0.20 m, daha uzun a&ccedil;&#305;kl&#305;klarda 0.20-0.25 m ba&#351;lang&#305;&ccedil; aday&#305;d&#305;r.</p>
+                </div>
+              </div>
+              <div class="grid three">
+                <label class="check"><input name="enable_floor_slabs" type="checkbox">Kat d&ouml;&#351;emelerini shell modelle
+                  <span class="field-note">A&ccedil;&#305;ksa her katta her kiri&#351;li aks paneli i&ccedil;in yatay shell alan olu&#351;turulur. Bu se&ccedil;enek yap&#305;sal model i&ccedil;in &ouml;nerilir.</span>
+                </label>
+                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; min m
+                  <input name="slab_thickness_min_m" type="number" min="0.08" step="0.01">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TS 500 kiri&#351;li s&uuml;rekli plaklarda a&ccedil;&#305;kl&#305;k/kal&#305;nl&#305;k kontrol&uuml; ister; bu jenerat&ouml;rde ayr&#305;ca mutlak alt s&#305;n&#305;r uygulan&#305;r. Yayg&#305;n: 0.15 m.</span>
+                </label>
+                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; max m
+                  <input name="slab_thickness_max_m" type="number" min="0.08" step="0.01">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje hesab&#305;yla belirlenir. Yayg&#305;n: Kiri&#351;li plaklarda 0.20-0.25 m &uuml;st aday aral&#305;&#287;&#305;.</span>
+                </label>
+                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+                  <input name="slab_thickness_step_m" type="number" min="0.01" step="0.01">
+                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.01 m.</span>
+                </label>
+              </div>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>Perde boyutu notu</h2>
+                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY 2018'e g&ouml;re betonarme perde, planda uzun kenar&#305;n&#305;n kal&#305;nl&#305;&#287;&#305;na oran&#305; en az 6 olan d&uuml;&#351;ey ta&#351;&#305;y&#305;c&#305; elemand&#305;r; yani l<sub>w</sub>/t<sub>w</sub> &ge; 6. Perde g&ouml;vde kal&#305;nl&#305;&#287;&#305; genel durumda kat y&uuml;ksekli&#287;inin 1/16's&#305;ndan ve 250 mm'den k&uuml;&ccedil;&uuml;k al&#305;nmaz; iki ucu yanal tutulu baz&#305; perde kollar&#305;nda 1/20 ko&#351;ulu de&#287;erlendirilebilir. Yayg&#305;n: T&uuml;rkiye'de konut/ofis projelerinde perde kal&#305;nl&#305;&#287;&#305; &ccedil;o&#287;unlukla 25-30 cm, perde uzunlu&#287;u yakla&#351;&#305;k 1.5-4.0 m aral&#305;&#287;&#305;nda se&ccedil;ilir. Bu jenerat&ouml;r perde panellerini hem X hem Y do&#287;rultusunda, kolon akslar&#305; aras&#305;na shell eleman olarak ekler.</p>
+                </div>
+              </div>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>Perde parametreleri</h2>
+                  <p class="section-note">Kolon kesiti se&ccedil;imi perdeden ba&#287;&#305;ms&#305;zd&#305;r. Bu se&ccedil;enek a&ccedil;&#305;ksa kolonlar ayn&#305; kal&#305;r; ilave perde panelleri hem X hem Y do&#287;rultusunda se&ccedil;ilen akslar aras&#305;na shell eleman olarak eklenir. Uzun kenar hangi do&#287;rultuda ise o do&#287;rultudaki perde kendi d&uuml;zlemi i&ccedil;inde yatay y&uuml;ke atalet/rijitlik katk&#305;s&#305; verir.</p>
+                </div>
+              </div>
+              <div class="grid three">
+                <label class="check"><input name="enable_shear_walls" type="checkbox">Perde ekle
+                  <span class="field-note">A&ccedil;&#305;ksa ilave perdeler kolonlardan ba&#287;&#305;ms&#305;z olarak hem X hem Y y&ouml;n&uuml;nde olu&#351;turulur. Yayg&#305;n: Orta katl&#305; konut/ofis sistemlerinde simetrik perde yerle&#351;imi tercih edilir.</span>
+                </label>
+                <label>Perde kal&#305;nl&#305;&#287;&#305; min m
+                  <input name="wall_thickness_min_m" type="number" min="0" step="0.05">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Genel durumda t<sub>w</sub> &ge; max(0.25 m, H/16) al&#305;n&#305;r. Yayg&#305;n: 0.25 m alt s&#305;n&#305;r.</span>
+                </label>
+                <label>Perde kal&#305;nl&#305;&#287;&#305; max m
+                  <input name="wall_thickness_max_m" type="number" min="0" step="0.05">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje bazl&#305;d&#305;r; a&#351;&#305;r&#305; kal&#305;nl&#305;k k&uuml;tle ve rijitlik da&#287;&#305;l&#305;m&#305;n&#305; etkiler. Yayg&#305;n: 0.25-0.30 m, daha y&uuml;ksek binalarda 0.35 m ve &uuml;zeri.</span>
+                </label>
+                <label>Perde kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+                  <input name="wall_thickness_step_m" type="number" min="0.05" step="0.05">
+                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.05 m.</span>
+                </label>
+                <label>Perde uzunlu&#287;u min m
+                  <input name="wall_length_min_m" type="number" min="0" step="0.1">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: l<sub>w</sub>/t<sub>w</sub> &ge; 6 ko&#351;ulunu sa&#287;lamal&#305;d&#305;r. 0.25 m kal&#305;nl&#305;k i&ccedil;in min yakla&#351;&#305;k 1.50 m. Yayg&#305;n: 1.5 m alt s&#305;n&#305;r.</span>
+                </label>
+                <label>Perde uzunlu&#287;u max m
+                  <input name="wall_length_max_m" type="number" min="0" step="0.1">
+                  <span class="field-note">Y&ouml;netmelik &uuml;st s&#305;n&#305;r&#305; do&#287;rudan bu parametreyle verilmez; plan, burulma ve mimari akslar belirleyicidir. Yayg&#305;n: 2.0-4.0 m.</span>
+                </label>
+                <label>Perde uzunlu&#287;u ad&#305;m&#305; m
+                  <input name="wall_length_step_m" type="number" min="0.1" step="0.1">
+                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.50 m.</span>
+                </label>
+                <label>Perde donat&#305; alt s&#305;n&#305;r&#305;
+                  <input name="wall_rho_min" type="number" min="0" step="0.0005">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Perde g&ouml;vde donat&#305;s&#305; i&ccedil;in minimum oran &ouml;n elemede 0.0025 al&#305;n&#305;r. Yayg&#305;n: 0.0025-0.0040.</span>
+                </label>
+                <label>Perde donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                  <input name="wall_rho_max" type="number" min="0" step="0.0005">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305;d&#305;r. Yayg&#305;n: 0.0040-0.0060; daha y&uuml;ksek oranlar s&#305;k donat&#305; ve detay zorlu&#287;u yaratabilir.</span>
+                </label>
+                <label>Min perde kal&#305;nl&#305;&#287;&#305; m
+                  <input name="min_wall_thickness_m" type="number" min="0" step="0.01">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.25 m ve H/16 kontrol&uuml; birlikte kullan&#305;l&#305;r. Yayg&#305;n: 0.25 m.</span>
+                </label>
+                <label>Min l<sub>w</sub>/t<sub>w</sub>
+                  <input name="min_wall_aspect_ratio" type="number" min="1" step="0.5">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Perde say&#305;lmas&#305; i&ccedil;in planda l<sub>w</sub>/t<sub>w</sub> &ge; 6. Yayg&#305;n: 6 ve &uuml;zeri; daha b&uuml;y&uuml;k oran daha belirgin perde davran&#305;&#351;&#305; verir.</span>
+                </label>
+                <label>Perde yerle&#351;imi
+                  <input name="wall_placement" type="text">
+                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Rijitlik merkezi ile k&uuml;tle merkezi aras&#305;ndaki fark ve burulma etkileri izlenmelidir. Yayg&#305;n: D&#305;&#351; akslarda veya &ccedil;ekirdek etraf&#305;nda simetrik yerle&#351;im.</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="tab-panel" data-panel="materials">
+            <div class="grid two">
+              <fieldset>
+                <legend>Beton s&#305;n&#305;flar&#305;</legend>
+                <div id="concreteClasses" class="chips"></div>
+                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: Deprem etkisindeki betonarme sistemlerde d&uuml;&#351;&uuml;k beton s&#305;n&#305;flar&#305;ndan ka&ccedil;&#305;n&#305;l&#305;r; bu veri setinde C25 alt&#305; kullan&#305;lmaz. Yayg&#305;n: T&uuml;rkiye'de yeni bina &ouml;n tasar&#305;m&#305;nda C25-C40 aral&#305;&#287;&#305;, s&#305;k olarak C30-C35.</p>
+              </fieldset>
+              <fieldset>
+                <legend>&Ccedil;elik s&#305;n&#305;flar&#305;</legend>
+                <div id="steelClasses" class="chips"></div>
+                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: T&uuml;rkiye Bina Deprem Y&ouml;netmeli&#287;i (TBDY) ve TS 500 yakla&#351;&#305;m&#305;na g&ouml;re sismik b&ouml;lgelerdeki betonarme ta&#351;&#305;y&#305;c&#305; sistemlerde minimum kabul S420/B420C nerv&uuml;rl&uuml; donat&#305; &ccedil;eli&#287;i olarak al&#305;n&#305;r; bu &ccedil;al&#305;&#351;mada S420 yerine B420C kullan&#305;l&#305;r. Yayg&#305;n: T&uuml;rkiye'de yeni bina projelerinde B420C ve B500C kullan&#305;l&#305;r; fy otomatik olarak 420 veya 500 MPa al&#305;n&#305;r.</p>
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="rebar">
+            <p class="section-note">Bu sekmedeki de&#287;erler model &uuml;retilirken rastgele se&ccedil;ilecek aday donat&#305; oranlar&#305;d&#305;r. Kabul/eleme alt-&uuml;st s&#305;n&#305;rlar&#305; Kontrol sekmesinde tan&#305;mlan&#305;r.</p>
+            <div class="ratio-groups">
+              <fieldset>
+                <legend>Kolon donat&#305; aday oranlar&#305;</legend>
+                <div id="columnRebarRatios" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Her model i&ccedil;in bu listeden bir kolon boyuna donat&#305; oran&#305; se&ccedil;ilir. Yayg&#305;n &ouml;n tasar&#305;m adaylar&#305; 0.010-0.030 aral&#305;&#287;&#305;ndad&#305;r; se&ccedil;ilen de&#287;er Kontrol sekmesindeki alt-&uuml;st s&#305;n&#305;rdan ge&ccedil;emezse model elenir.</p>
+              </fieldset>
+              <fieldset>
+                <legend>Kiri&#351; mesnet &uuml;st aday oranlar&#305;</legend>
+                <div id="beamTopRatioSupports" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Kiri&#351; u&ccedil;/mesnet b&ouml;lgesi &uuml;st donat&#305;s&#305; i&ccedil;in bu listeden se&ccedil;im yap&#305;l&#305;r. Yayg&#305;n parametrik adaylar 0.005-0.020 aral&#305;&#287;&#305;ndad&#305;r.</p>
+              </fieldset>
+              <fieldset>
+                <legend>Kiri&#351; a&ccedil;&#305;kl&#305;k alt aday oranlar&#305;</legend>
+                <div id="beamBottomRatioSpans" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Kiri&#351; a&ccedil;&#305;kl&#305;k b&ouml;lgesi alt donat&#305;s&#305; i&ccedil;in bu listeden se&ccedil;im yap&#305;l&#305;r. Yayg&#305;n adaylar 0.005-0.016 aral&#305;&#287;&#305;ndad&#305;r.</p>
+              </fieldset>
+              <fieldset>
+                <legend>Perde donat&#305; aday oranlar&#305;</legend>
+                <div id="wallRebarRatios" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Perde eklenirse g&ouml;vde donat&#305;s&#305; i&ccedil;in bu listeden oran se&ccedil;ilir. Yayg&#305;n parametrik adaylar 0.0025-0.0060 aral&#305;&#287;&#305;ndad&#305;r; kabul s&#305;n&#305;rlar&#305; Temel/Zemin sekmesindeki perde ayarlar&#305;nda tutulur.</p>
+              </fieldset>
+              <fieldset>
+                <legend>D&ouml;&#351;eme donat&#305; aday oranlar&#305;</legend>
+                <div id="slabRebarRatios" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Se&ccedil;ilen oran d&ouml;&#351;emenin iki asal do&#287;rultusu i&ccedil;in ayn&#305; &ouml;n kabul olarak kullan&#305;l&#305;r. Y&ouml;netmelik/&ouml;n eleme: TS 500'de S420/S500 i&ccedil;in tek y&ouml;nl&uuml; plak asal donat&#305; oran&#305; en az 0.0020; iki y&ouml;nl&uuml; plakta her bir do&#287;rultuda en az 0.0015 ve toplamda en az 0.0035'tir. Bu jenerat&ouml;r muhafazak&acirc;r olarak her iki do&#287;rultuda en az 0.0020 ister. Yayg&#305;n adaylar: 0.0020-0.0040.</p>
+              </fieldset>
+              <fieldset>
+                <legend>Radye temel donat&#305; aday oranlar&#305;</legend>
+                <div id="raftRebarRatios" class="ratio-list"></div>
+                <p class="section-note">Aday havuzu: Radye temel shell alan&#305; i&ccedil;in temsili toplam donat&#305; oran&#305;d&#305;r. Y&ouml;netmelik/&ouml;n eleme: Radye donat&#305;s&#305; nihai olarak e&#287;ilme, kesme, z&#305;mbalama, zemin bas&#305;nc&#305; ve oturma kontrolleriyle tasarlanmal&#305;d&#305;r; bu jenerat&ouml;r TS 500 plak/temel davran&#305;&#351;&#305; i&ccedil;in 0.0020 alt &ouml;n eleme seviyesini kullan&#305;r. Yayg&#305;n adaylar: 0.0020-0.0050.</p>
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="foundation">
+            <div class="grid three">
+              <label class="check"><input name="enable_raft_foundation" type="checkbox">Radye temel modelle
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Radye boyutland&#305;rma zemin emniyeti, oturma, z&#305;mbalama, e&#287;ilme ve kesme kontrolleriyle yap&#305;lmal&#305;d&#305;r. Bu panelde radye, sentetik model i&ccedil;in kabuk eleman &ouml;n kabul&uuml;d&uuml;r. Yayg&#305;n: Perde/kolonlu orta katl&#305; yap&#305;larda radye temel s&#305;k tercih edilir.</span>
+              </label>
+              <label class="check"><input name="assign_soil_vertical_springs" type="checkbox">D&uuml;&#351;ey zemin yay&#305; ata
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TBDY yatak katsay&#305;s&#305;n&#305; do&#287;rudan vermez; de&#287;erler zemin et&uuml;d&uuml;nden al&#305;nmal&#305;d&#305;r. Burada Winkler yay&#305; i&ccedil;in parametrik kabul kullan&#305;l&#305;r.</span>
+              </label>
+              <fieldset>
+                <legend>TBDY zemin s&#305;n&#305;flar&#305;</legend>
+                <div id="soilClasses" class="chips"></div>
+                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY zemin etkisini ZA-ZE s&#305;n&#305;flar&#305; ile dikkate al&#305;r; bu modelde s&#305;n&#305;f yatak katsay&#305;s&#305;na ba&#287;lan&#305;r. Yayg&#305;n: ZC-ZD orta/yumu&#351;ak zemin senaryolar&#305; veri &ccedil;e&#351;itlili&#287;i i&ccedil;in s&#305;k kullan&#305;l&#305;r.</p>
+              </fieldset>
+              <label>Radye kal&#305;nl&#305;&#287;&#305; min m
+                <input name="raft_thickness_min_m" type="number" min="0" step="0.05">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Nihai s&#305;n&#305;r z&#305;mbalama, kesme, e&#287;ilme ve oturma hesab&#305;yla belirlenir. Bu jenerat&ouml;rde 0.40 m alt&#305; elenir. Yayg&#305;n: Orta katl&#305; binalarda 0.50 m ba&#351;lang&#305;&ccedil; aday&#305;.</span>
+              </label>
+              <label>Radye kal&#305;nl&#305;&#287;&#305; max m
+                <input name="raft_thickness_max_m" type="number" min="0" step="0.05">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje y&uuml;kleri ve zeminle belirlenir; gereksiz kal&#305;nl&#305;k k&uuml;tle ve maliyeti art&#305;r&#305;r. Yayg&#305;n: 0.60-1.00 m aral&#305;&#287;&#305;.</span>
+              </label>
+              <label>Radye kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+                <input name="raft_thickness_step_m" type="number" min="0.05" step="0.05">
+                <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.10 m.</span>
+              </label>
+              <label>Min radye kal&#305;nl&#305;&#287;&#305; m
+                <input name="min_raft_thickness_m" type="number" min="0" step="0.05">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Modelde kabul edilecek mutlak alt s&#305;n&#305;rd&#305;r; nihai tasar&#305;m yerine ge&ccedil;mez. Yayg&#305;n: 0.40-0.50 m alt kontrol seviyesi.</span>
+              </label>
+              <label>Radye kenar ta&#351;mas&#305; m
+                <input name="foundation_edge_offset_m" type="number" min="0" step="0.1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kenar ta&#351;mas&#305; kolon/perde y&uuml;klerinin zemine yay&#305;lmas&#305;, z&#305;mbalama ve kal&#305;p uygulamas&#305; i&ccedil;in kontrol edilir. Yayg&#305;n: 0.50 m civar&#305;.</span>
+              </label>
+            </div>
+            <div class="section-table-wrap">
+              <div class="section-head">
+                <div>
+                  <h2>Zemin yatak katsay&#305;lar&#305; kN/m3</h2>
+                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY zemin s&#305;n&#305;f&#305; do&#287;rudan yatak katsay&#305;s&#305; vermez; kesin ks de&#287;eri geoteknik rapora g&ouml;re al&#305;nmal&#305;d&#305;r. Buradaki de&#287;erler Winkler yay&#305; i&ccedil;in sentetik/parametrik kabuld&uuml;r. Yayg&#305;n: ZA-ZB sert zeminde y&uuml;ksek, ZD-ZE yumu&#351;ak zeminde d&uuml;&#351;&uuml;k ks kullan&#305;l&#305;r.</p>
+                </div>
+              </div>
+              <div id="soilModulusTable" class="soil-table"></div>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="checks">
+            <p class="section-note">Bu sekmedeki de&#287;erler aday modelin analiz &ouml;ncesi ge&ccedil;ece&#287;i kabul/eleme s&#305;n&#305;rlar&#305;d&#305;r. Donat&#305; sekmesindeki adaylardan se&ccedil;ilen oranlar bu s&#305;n&#305;rlar&#305;n d&#305;&#351;&#305;nda kal&#305;rsa aday yeniden &uuml;retilir.</p>
+            <div class="grid three">
+              <label>Kolon donat&#305; alt s&#305;n&#305;r&#305;
+                <input name="rho_col_min" type="number" min="0" step="0.001">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kolon boyuna donat&#305; oran&#305; i&ccedil;in alt s&#305;n&#305;r 0.01 al&#305;n&#305;r. Yayg&#305;n: 0.01-0.02 ba&#351;lang&#305;&ccedil; aral&#305;&#287;&#305;.</span>
+              </label>
+              <label>Kolon donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                <input name="rho_col_max" type="number" min="0" step="0.001">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu sistemde kolon i&ccedil;in 0.04 &uuml;st s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.03 &uuml;zeri s&#305;k&#305;&#351;&#305;k donat&#305; riski nedeniyle dikkat ister.</span>
+              </label>
+              <label>Kiri&#351; donat&#305; alt s&#305;n&#305;r&#305;
+                <input name="rho_beam_min" type="number" min="0" step="0.001">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Minimum &ccedil;ekme donat&#305;s&#305;n&#305; temsil eden 0.003 alt s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.005 ve &uuml;zeri adaylar.</span>
+              </label>
+              <label>Kiri&#351; donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                <input name="rho_beam_max" type="number" min="0" step="0.001">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351; donat&#305;s&#305; i&ccedil;in 0.025 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.016-0.020 &uuml;st donat&#305; yo&#287;un aral&#305;kt&#305;r.</span>
+              </label>
+              <label>Min kolon boyutu m
+                <input name="min_column_dimension_m" type="number" min="0" step="0.01">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.30 m alt&#305; kolon kabul edilmez. Yayg&#305;n: 0.40-0.70 m.</span>
+              </label>
+              <label>Min kiri&#351; geni&#351;li&#287;i m
+                <input name="min_beam_width_m" type="number" min="0" step="0.01">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.25 m alt&#305; elenir. Yayg&#305;n: 0.25-0.35 m.</span>
+              </label>
+              <label>Min kiri&#351; y&uuml;ksekli&#287;i m
+                <input name="min_beam_depth_m" type="number" min="0" step="0.01">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.50 m alt&#305; elenir. Yayg&#305;n: 0.50-0.70 m.</span>
+              </label>
+              <label>Maks L/h
+                <input name="max_span_to_beam_depth_ratio" type="number" min="1" step="0.5">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Sehim/rijitlik i&ccedil;in L/h kontrol&uuml; &ouml;n eleme olarak kullan&#305;l&#305;r. Yayg&#305;n: 12-15 aral&#305;&#287;&#305;.</span>
+              </label>
+              <label>G&uuml;&ccedil;l&uuml; kolon katsay&#305;s&#305;
+                <input name="strong_column_factor" type="number" min="1" step="0.05">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: G&uuml;&ccedil;l&uuml; kolon-zay&#305;f kiri&#351; i&ccedil;in kapasite oran&#305; 1.20 al&#305;n&#305;r. Yayg&#305;n: 1.2 muhafazakar &ouml;n kontrol.</span>
+              </label>
+              <label>Min d&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; m
+                <input name="min_slab_thickness_m" type="number" min="0.08" step="0.01">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TS 500 a&ccedil;&#305;kl&#305;k/kal&#305;nl&#305;k ko&#351;uluna ek mutlak &ouml;n eleme alt s&#305;n&#305;r&#305;d&#305;r. Yayg&#305;n kiri&#351;li plak ba&#351;lang&#305;c&#305;: 0.12-0.15 m.</span>
+              </label>
+              <label>Maks d&ouml;&#351;eme L<sub>k&#305;sa</sub>/h
+                <input name="max_slab_continuous_span_to_thickness_ratio" type="number" min="1" step="1">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351;li s&uuml;rekli plaklar i&ccedil;in TS 500 tabanl&#305; sehim &ouml;n kontrol&uuml; olarak L/h &lt;= 30 kullan&#305;l&#305;r. Nihai sehim hesab&#305;n&#305;n yerini tutmaz.</span>
+              </label>
+              <label>D&ouml;&#351;eme donat&#305; alt s&#305;n&#305;r&#305;
+                <input name="slab_rho_min" type="number" min="0" step="0.0005">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Muhafazak&acirc;r alt s&#305;n&#305;r her iki do&#287;rultuda 0.0020. Bu de&#287;er tek y&ouml;nl&uuml; S420/S500 plak asal donat&#305;s&#305;n&#305; ve iki y&ouml;nl&uuml; plak minimumlar&#305;n&#305; kapsar.</span>
+              </label>
+              <label>D&ouml;&#351;eme donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                <input name="slab_rho_max" type="number" min="0" step="0.0005">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st filtre s&#305;n&#305;r&#305;d&#305;r; nihai donat&#305; hesab&#305; de&#287;ildir. Yayg&#305;n: 0.0020-0.0040.</span>
+              </label>
+              <label>Radye donat&#305; alt s&#305;n&#305;r&#305;
+                <input name="raft_rho_min" type="number" min="0" step="0.0005">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Radye temel i&ccedil;in nihai minimum donat&#305; e&#287;ilme, kesme ve z&#305;mbalama hesab&#305;yla belirlenir. Bu parametrik &ouml;n elemede plak/temel davran&#305;&#351;&#305; i&ccedil;in 0.0020 alt s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.0020-0.0035 ba&#351;lang&#305;&ccedil; aral&#305;&#287;&#305;.</span>
+              </label>
+              <label>Radye donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                <input name="raft_rho_max" type="number" min="0" step="0.0005">
+                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305;d&#305;r; daha y&uuml;ksek oranlar donat&#305; s&#305;k&#305;&#351;&#305;kl&#305;&#287;&#305; ve uygulanabilirlik a&ccedil;&#305;s&#305;ndan ayr&#305; kontrol ister. Yayg&#305;n: 0.0030-0.0060.</span>
+              </label>
+              <label>Dead load kN/m<input name="dead_load_kn_m" type="number" step="0.1"></label>
+              <label>Live load kN/m<input name="live_load_kn_m" type="number" step="0.1"></label>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="pushover">
+            <div class="grid three">
+              <label class="check"><input name="enable_pushover_cases" type="checkbox">Pushover case tan&#305;mla
+                <span class="field-note">A&ccedil;&#305;ksa SAP2000 i&ccedil;inde PUSHOVER_X/PUSHOVER_Y nonlinear static case'leri olu&#351;turulur. Bu tek ba&#351;&#305;na &ccedil;&ouml;z&uuml;m ba&#351;latmaz.</span>
+              </label>
+              <label class="check"><input name="run_analysis_after_save" type="checkbox">Analizi &ccedil;al&#305;&#351;t&#305;r
+                <span class="field-note">A&ccedil;&#305;ksa model kaydedildikten sonra run flag'leri MODAL ve se&ccedil;ili pushover case'lere verilir, ard&#305;ndan SAP2000 Analyze.RunAnalysis() &ccedil;a&#287;r&#305;l&#305;r.</span>
+              </label>
+              <fieldset>
+                <legend>Yönler</legend>
+                <div id="pushoverDirections" class="chips"></div>
+              </fieldset>
+              <label class="check"><input name="fix_pushover_target_drift_ratio" type="checkbox">Hedef drift sabit
+                <span class="field-note">A&ccedil;&#305;ksa t&uuml;m modellerde tek hedef drift kullan&#305;l&#305;r ve hedef drift optimizasyon/de&#287;i&#351;ken havuzuna dahil edilmez.</span>
+              </label>
+              <label>Sabit hedef drift<input name="pushover_target_drift_ratio_fixed" type="number" min="0" step="0.001">
+                <span class="field-note">Hedef drift sabit a&ccedil;&#305;kken kullan&#305;l&#305;r. &Ouml;rnek: 0.04 toplam bina y&uuml;ksekli&#287;inin %4'&uuml; kadar tepe deplasman hedefidir.</span>
+              </label>
+              <label>Hedef drift min<input name="pushover_target_drift_ratio_min" type="number" min="0" step="0.001">
+                <span class="field-note">Hedef drift sabit kapal&#305;yken rastgele se&ccedil;im alt s&#305;n&#305;r&#305;d&#305;r.</span>
+              </label>
+              <label>Hedef drift max<input name="pushover_target_drift_ratio_max" type="number" min="0" step="0.001">
+                <span class="field-note">Hedef drift sabit kapal&#305;yken rastgele se&ccedil;im &uuml;st s&#305;n&#305;r&#305;d&#305;r.</span>
+              </label>
+              <label>Hedef drift adımı<input name="pushover_target_drift_ratio_step" type="number" min="0.001" step="0.001">
+                <span class="field-note">Hedef drift sabit kapal&#305;yken min-max aral&#305;&#287;&#305;nda kullan&#305;lacak art&#305;md&#305;r.</span>
+              </label>
+              <label>Taban kesme proxy kN<input name="pushover_base_shear_proxy_kn" type="number" min="0" step="10"></label>
+              <label>Yük dağılımı<input name="pushover_load_distribution" type="text"></label>
+              <label class="check"><input name="enable_plastic_hinges" type="checkbox">Plastik mafsal ata
+                <span class="field-note">Ger&ccedil;ek pushover i&ccedil;in zorunludur. Mafsal atanmadan &ccedil;al&#305;&#351;an nonlinear static case, kapasite e&#287;risi ve IO/LS/CP performans yorumu i&ccedil;in yeterli kabul edilmez.</span>
+              </label>
+              <label class="check"><input name="require_plastic_hinge_assignment" type="checkbox">Mafsal atanamazsa modeli ele
+                <span class="field-note">A&ccedil;&#305;k kalmal&#305;d&#305;r. Bu kurulumdaki SAP2000 v22 OAPI do&#287;rudan SetHingeAssign metodunu sunmad&#305;&#287;&#305; i&ccedil;in mafsallar .$2k text model tablolar&#305;na yaz&#305;l&#305;p SAP2000'e tekrar okutularak atan&#305;r; do&#287;rulanamazsa model elenir.</span>
+              </label>
+              <label class="check"><input name="assign_column_pmm_hinges" type="checkbox">Kolon M2/M3 mafsalı
+                <span class="field-note">SAP2000 v22 text importta `Default-PMM` auto-hinge farkl&#305; tablo ister. Bu a&#351;amada import hatas&#305; olmamas&#305; i&ccedil;in kolon u&ccedil;lar&#305;na a&ccedil;&#305;k tan&#305;ml&#305; M2 ve M3 mafsallar&#305; atan&#305;r.</span>
+              </label>
+              <label class="check"><input name="assign_beam_m3_hinges" type="checkbox">Kiriş M3 mafsalı
+                <span class="field-note">Kiri&#351; u&ccedil;lar&#305;na a&ccedil;&#305;k tan&#305;ml&#305; M3 moment mafsal&#305; atan&#305;r.</span>
+              </label>
+              <label class="check"><input name="assign_shear_hinges" type="checkbox">V2/V3 kesme mafsalı</label>
+              <label class="check"><input name="enable_exact_hinge_ui_export" type="checkbox">Deneysel SAP hinge exportu
+                  <span class="field-note">Varsay&#305;lan kapal&#305;d&#305;r. Ana &uuml;retim proxy hinge sonu&ccedil;lar&#305;n&#305; kullan&#305;r. Bu se&ccedil;enek yaln&#305;zca az say&#305;da validasyon modeli i&ccedil;in SAP2000 Frame Hinge States tablosunu almaya &ccedil;al&#305;&#351;&#305;r; SAP tablo aray&uuml;z&uuml; yava&#351; ve k&#305;r&#305;lgan olabilir.</span>
+              </label>
+              <label>Her y&ouml;n i&ccedil;in min hinge sat&#305;r&#305;<input name="exact_hinge_export_min_rows_per_direction" type="number" min="1" step="1">
+                <span class="field-note">Sadece deneysel SAP hinge exportu a&ccedil;&#305;ksa kullan&#305;l&#305;r. Ana proxy &uuml;retimini etkilemez.</span>
+              </label>
+              <label>Kolon mafsal property<input name="column_hinge_property" type="text">
+                <span class="field-note">Bilgi alan&#305;d&#305;r; text importta ger&ccedil;ekte `GEN_COL_M2` ve `GEN_COL_M3` yaz&#305;l&#305;r. Auto PMM tablo format&#305; ayr&#305;ca eklenecek.</span>
+              </label>
+              <label>Kiriş mafsal property<input name="beam_hinge_property" type="text">
+                <span class="field-note">Bilgi alan&#305;d&#305;r; text importta ger&ccedil;ekte `GEN_BEAM_M3` yaz&#305;l&#305;r.</span>
+              </label>
+              <label>V2 mafsal property<input name="shear_hinge_v2_property" type="text"></label>
+              <label>V3 mafsal property<input name="shear_hinge_v3_property" type="text"></label>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="results">
+            <section class="results-panel">
+              <div class="section-head">
+                <div>
+                  <h2>Pushover Sonu&ccedil;lar&#305;</h2>
+                  <p class="section-note">Analiz sonras&#305; kapasite e&#287;rileri, taban kesmesi-&ccedil;at&#305; deplasman&#305; bilgileri ve plastik mafsal &ouml;zetleri burada listelenir.</p>
+                </div>
+                <button id="refreshResultsBtn" type="button">Yenile</button>
+              </div>
+              <div id="pushoverResults" class="result-list"></div>
+            </section>
+          </div>
+
+          <div class="tab-panel" data-panel="charts">
+            <section class="results-panel">
+              <div class="section-head">
+                <div>
+                  <h2>Grafikler</h2>
+                  <p class="section-note">Se&ccedil;ilen model parametresini pushover/proxy mafsal sonucu ile kar&#351;&#305;la&#351;t&#305;r&#305;r. Grafikler dashboarddaki mevcut model sonu&ccedil;lar&#305;ndan &uuml;retilir.</p>
+                </div>
+                <button id="refreshChartsBtn" type="button">Yenile</button>
+              </div>
+              <div class="grid four chart-controls">
+                <label>Grafik tipi
+                  <select id="chartType">
+                    <option value="scatter">Scatter</option>
+                    <option value="bar">Grup ortalamas&#305;</option>
+                    <option value="heatmap">Heatmap</option>
+                  </select>
+                </label>
+                <label>X parametresi
+                  <select id="chartXMetric"></select>
+                </label>
+                <label>Y sonucu
+                  <select id="chartYMetric"></select>
+                </label>
+                <label>Renk / grup
+                  <select id="chartColorMetric"></select>
+                </label>
+                <label class="checkbox-row">
+                  <input id="chartHideMissing" type="checkbox" checked>
+                  <span>Veri yok olanları gizle</span>
+                </label>
+              </div>
+              <div id="chartSummary" class="metric-grid chart-summary"></div>
+              <div id="chartCanvas" class="chart-canvas"></div>
+            </section>
+          </div>
+
+          <div class="tab-panel" data-panel="som">
+            <section class="results-panel">
+              <div class="section-head">
+                <div>
+                  <h2>SOM Analizi</h2>
+                  <p class="section-note">Self Organizing Map, modelleri yaln&#305;zca X parametre benzerli&#287;ine g&ouml;re 2B haritaya yerle&#351;tirir. Se&ccedil;ilen Y sonucu harita h&uuml;crelerini yorumlamak i&ccedil;in renklendirilir.</p>
+                </div>
+                <div class="inline-actions">
+                  <button id="optimizeSomBtn" type="button">Boyutu Optimize Et</button>
+                  <button id="selectSomRepresentativeBtn" type="button">Temsilci Seç</button>
+                  <button id="trainSomBtn" type="button">SOM E&#287;it</button>
+                  <button id="refreshSomBtn" type="button">Yenile</button>
+                </div>
+              </div>
+              <div class="grid five chart-controls">
+                <label>Geni&#351;lik
+                  <input id="somWidth" type="number" value="4" min="2" max="20" step="1">
+                </label>
+                <label>Y&uuml;kseklik
+                  <input id="somHeight" type="number" value="4" min="2" max="20" step="1">
+                </label>
+                <label>Iterasyon
+                  <input id="somIterations" type="number" value="800" min="50" step="50">
+                </label>
+                <label>Min grid
+                  <input id="somMinGrid" type="number" value="3" min="3" max="20" step="1">
+                  <span class="field-note">Optimizasyon bu kare grid boyutundan başlar.</span>
+                </label>
+                <label>Maks grid
+                  <input id="somMaxGrid" type="number" value="8" min="3" max="20" step="1">
+                  <span class="field-note">Optimizasyon 3x3'ten bu değere kadar kare gridleri dener.</span>
+                </label>
+                <label>Renklendirilecek sonu&ccedil;
+                  <select id="somResultMetric"></select>
+                  <span class="field-note">Bu Y sonucu SOM e&#287;itimine dahil edilmez; yaln&#305;zca h&uuml;cre renklendirme ve yorumlama i&ccedil;in kullan&#305;l&#305;r.</span>
+                </label>
+                <label>Harita tipi
+                  <select id="somMapMode">
+                    <option value="result">Sonu&ccedil; haritas&#305;</option>
+                    <option value="hits">Hit map</option>
+                    <option value="umatrix">U-Matrix</option>
+                  </select>
+                </label>
+              </div>
+              <div class="info-block">
+                <b>SOM E&#287;itim Parametreleri (X)</b>
+                <p class="section-note">SOM modeli yaln&#305;zca se&ccedil;ilen X parametreleriyle e&#287;itilir. Se&ccedil;ilen Y sonucu e&#287;itimde kullan&#305;lmaz; yaln&#305;zca harita h&uuml;crelerinin m&uuml;hendislik yorumunu yapmak i&ccedil;in sonradan renklendirilir. B&ouml;ylece modelin hasar sonucunu ezberlemesi engellenir.</p>
+                <div id="somXColumns" class="som-x-columns"></div>
+              </div>
+              <div id="somLeakageWarning" class="muted-box">Y sonu&ccedil; de&#287;i&#351;kenleri SOM e&#287;itim matrisine al&#305;nmaz; hedef s&#305;z&#305;nt&#305;s&#305; engellenir.</div>
+              <div id="somSummary" class="metric-grid chart-summary"></div>
+              <div id="somCanvas" class="som-canvas"></div>
+              <div id="somDetails" class="som-details muted-box">Bir h&uuml;creye t&#305;klay&#305;nca o k&uuml;medeki model/y&ouml;n kay&#305;tlar&#305; burada g&ouml;r&uuml;n&uuml;r.</div>
+              <div class="som-class-analysis">
+                <div class="section-head">
+                  <div>
+                    <h2>SOM Sınıf Analizi</h2>
+                    <p class="section-note">Renklendirilecek sonuç içindeki seçilen sınıf ya da aralık için karşılaştırmalı yorum: seçilen sınıf vs diğerleri, sınıf içi alt davranış grupları ve en saf / en yoğun hücreler.</p>
+                  </div>
+                </div>
+                <div class="grid three chart-controls">
+                  <label>İncelenecek sınıf / aralık
+                    <select id="somClassTarget"></select>
+                  </label>
+                  <label>Sayısal sonuç için aralık sayısı
+                    <input id="somBinCount" type="number" value="5" min="3" max="10" step="1">
+                    <span class="field-note">Renklendirilecek sonuç sayısalsa otomatik aralık sayısı.</span>
+                  </label>
+                  <label>Manuel aral&#305;klar
+                    <input id="somCustomBins" type="text" placeholder="&Ouml;rn: 0-0.02; 0.02-0.04; 0.04-0.08">
+                    <span class="field-note">&#304;stersen aral&#305;klar&#305; kendin yaz. Bi&ccedil;im: min-max; min-max. Doluysa otomatik aral&#305;k say&#305;s&#305; yerine bu kullan&#305;l&#305;r.</span>
+                  </label>
+                </div>
+                <div id="somClassAnalysis" class="som-details muted-box">SOM eğitilip sonuç değişkeni seçildiğinde sınıf analizi burada oluşur.</div>
+              </div>
+            </section>
+          </div>
+
+          <div class="tab-panel" data-panel="machine-learning">
+            <section class="results-panel">
+              <div class="section-head">
+                <div>
+                  <h2>Makine &Ouml;&#287;renmesi</h2>
+                  <p class="section-note">Analiz edilen modellerden y&ouml;n bazl&#305; veri seti kurulur. &#304;lk plastik mafsal tipi, kritik eleman tipi, kritik seviye ve LS-CP riski i&ccedil;in se&ccedil;ilen algoritma e&#287;itilir. ML dosyalar&#305; &uuml;retim artefaktlar&#305;ndan ayr&#305; tutulur.</p>
+                </div>
+                <div class="inline-actions">
+                  <button id="trainMlBtn" type="button">Modeli E&#287;it</button>
+                  <button id="saveMlBtn" type="button">Modeli Sakla</button>
+                  <button id="resetMlBtn" type="button" class="danger">ML Modelini S&#305;f&#305;rla</button>
+                </div>
+              </div>
+              <div class="grid three">
+                <label>Algoritma
+                  <select id="mlAlgorithm" name="ml_auto_train_algorithm">
+                    <option value="knn">KNN</option>
+                    <option value="random_forest">Random Forest</option>
+                    <option value="xgboost">XGBoost</option>
+                    <option value="lightgbm">LightGBM</option>
+                  </select>
+                  <span class="field-note">KNN ve Random Forest bu kurulumda d&#305;&#351; ba&#287;&#305;ml&#305;l&#305;ks&#305;z &ccedil;al&#305;&#351;&#305;r. XGBoost/LightGBM i&ccedil;in ilgili Python paketleri gerekir.</span>
+                </label>
+                <label>ML random seed<input id="mlRandomSeed" name="ml_random_seed" type="number" value="42" step="1"></label>
+                <label class="check"><input name="ml_preserve_existing_weights" type="checkbox">Mevcut ağırlıkları koru
+                  <span class="field-note">Açıksa Modeli Eğit öncesinde seçili algoritmanın mevcut ağırlıkları snapshot olarak saklanır; yeni model eski eğitim belleği ve yeni metadata ile geliştirilir.</span>
+                </label>
+                <label class="check"><input name="ml_auto_train_after_generation" type="checkbox">Üretim bitince öğrenmeye devam et
+                  <span class="field-note">Açıksa üretim tamamlandığında seçili algoritma mevcut tüm metadata ve yeni sonuçlarla yeniden eğitilir. Ağırlıkları koru açıksa eski model yedeklenir.</span>
+                </label>
+                <label class="check"><input name="ml_use_som_features" type="checkbox">SOM özelliklerini ML'ye ekle
+                  <span class="field-note">Açıksa ML girdilerine SOM hücre konumu, BMU mesafesi, X parametre z-skorları ve X kombinasyonları eklenir. SOM yalnızca X parametreleriyle eğitilir; sonuç/Y bilgileri feature olarak kullanılmaz.</span>
+                 </label>
+               </div>
+              <div class="info-block">
+                <b>Makine &Ouml;&#287;renmesi Girdi Parametreleri (X)</b>
+                <p class="section-note">Bu liste SOM E&#287;itim Parametreleri ile ortakt&#305;r. Burada veya SOM sekmesinde yapt&#305;&#287;&#305;n se&ccedil;im iki tarafta da ayn&#305; anda g&uuml;ncellenir; ML modeli yaln&#305;zca se&ccedil;ili parametrelerle e&#287;itilir.</p>
+                <div id="mlXColumns" class="som-x-columns"></div>
+              </div>
+              <div id="mlStatus" class="ml-panel"></div>
+              <div class="info-block">
+                <b>Proxy Kalibrasyonu</b>
+                <p class="section-note">SAP2000'den elle d&#305;&#351;a aktar&#305;lan ger&ccedil;ek mafsal sonu&ccedil;lar&#305;yla proxy plastik rotasyon katsay&#305;lar&#305;n&#305; kalibre eder. Export dosyalar&#305;n&#305; <code>D:\sap2000_generated_models\hinge_validation\raw_exports</code> klas&ouml;r&uuml;ne koy.</p>
+                <div class="inline-actions">
+                  <button id="selectValidationBtn" type="button">Do&#287;rulama Listesi Olu&#351;tur</button>
+                  <button id="calibrateProxyBtn" type="button">SAP Exportlar&#305;yla Kalibre Et</button>
+                </div>
+                <div id="calibrationStatus" class="muted-box">Hen&uuml;z kalibrasyon &ccedil;al&#305;&#351;t&#305;r&#305;lmad&#305;.</div>
+              </div>
+            </section>
+          </div>
+
+          <div class="tab-panel" data-panel="prediction">
+            <section class="results-panel">
+              <div class="section-head">
+                <div>
+                  <h2>Tahmin</h2>
+                  <p class="section-note">E&#287;itilen model, girilen parametrelere g&ouml;re X ve Y y&ouml;nleri i&ccedil;in ilk plastik mafsal&#305;n ve en kritik eleman&#305;n yakla&#351;&#305;k konumunu tahmin eder.</p>
+                </div>
+                <button id="predictMlBtn" type="button">Tahmin Et</button>
+              </div>
+              <div class="grid three">
+                <label>Tahmin algoritması
+                  <select id="predictAlgorithm">
+                    <option value="knn">KNN</option>
+                    <option value="random_forest">Random Forest</option>
+                    <option value="xgboost">XGBoost</option>
+                    <option value="lightgbm">LightGBM</option>
+                  </select>
+                </label>
+                <label>Kat say&#305;s&#305;<input id="predStoryCount" type="number" value="6" min="1" step="1"></label>
+                <label>X a&ccedil;&#305;kl&#305;k say&#305;s&#305;<input id="predXBayCount" type="number" value="3" min="1" step="1"></label>
+                <label>Y a&ccedil;&#305;kl&#305;k say&#305;s&#305;<input id="predYBayCount" type="number" value="3" min="1" step="1"></label>
+                <label>Ort. X a&ccedil;&#305;kl&#305;k m<input id="predAvgSpanX" type="number" value="5.5" min="0" step="0.5"></label>
+                <label>Ort. Y a&ccedil;&#305;kl&#305;k m<input id="predAvgSpanY" type="number" value="5.5" min="0" step="0.5"></label>
+                <label>Maks X a&ccedil;&#305;kl&#305;k m<input id="predMaxSpanX" type="number" value="6.5" min="0" step="0.5"></label>
+                <label>Maks Y a&ccedil;&#305;kl&#305;k m<input id="predMaxSpanY" type="number" value="6.5" min="0" step="0.5"></label>
+                <label>Kat y&uuml;ksekli&#287;i m<input id="predStoryHeight" type="number" value="3.2" min="0" step="0.1"></label>
+                <label>Beton s&#305;n&#305;f&#305;<select id="predConcrete"><option>C25</option><option>C30</option><option>C35</option><option>C40</option></select></label>
+                <label>&Ccedil;elik s&#305;n&#305;f&#305;<select id="predSteel"><option>B420C</option><option>B500C</option></select></label>
+                <label>Zemin s&#305;n&#305;f&#305;<select id="predSoil"><option>ZA</option><option>ZB</option><option selected>ZC</option><option>ZD</option><option>ZE</option></select></label>
+                <label>Kolon geni&#351;li&#287;i m<input id="predColumnWidth" type="number" value="0.50" min="0" step="0.05"></label>
+                <label>Kolon y&uuml;ksekli&#287;i m<input id="predColumnDepth" type="number" value="0.50" min="0" step="0.05"></label>
+                <label>Kiri&#351; geni&#351;li&#287;i m<input id="predBeamWidth" type="number" value="0.30" min="0" step="0.05"></label>
+                <label>Kiri&#351; y&uuml;ksekli&#287;i m<input id="predBeamDepth" type="number" value="0.60" min="0" step="0.05"></label>
+                <label>Kolon donat&#305; oran&#305;<input id="predRhoCol" type="number" value="0.015" min="0" step="0.001"></label>
+                <label>Kiri&#351; &uuml;st donat&#305; oran&#305;<input id="predRhoBeamTop" type="number" value="0.012" min="0" step="0.001"></label>
+                <label>Kiri&#351; alt donat&#305; oran&#305;<input id="predRhoBeamBottom" type="number" value="0.008" min="0" step="0.001"></label>
+                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; m<input id="predSlabThickness" type="number" value="0.18" min="0.08" step="0.01"></label>
+                <label>D&ouml;&#351;eme donat&#305; oran&#305;<input id="predSlabRebarRatio" type="number" value="0.0025" min="0" step="0.0005"></label>
+                <label>Radye kal&#305;nl&#305;&#287;&#305; m<input id="predRaftThickness" type="number" value="0.70" min="0" step="0.1"></label>
+                <label>Radye donat&#305; oran&#305;<input id="predRaftRebarRatio" type="number" value="0.0030" min="0" step="0.0005"></label>
+                <label>Zemin yatak katsay&#305;s&#305; kN/m3<input id="predSubgrade" type="number" value="50000" min="0" step="1000"></label>
+                 <label>Hedef drift<input id="predTargetDrift" type="number" value="0.04" min="0" step="0.001"></label>
+                 <label class="check"><input id="predHasShearWalls" type="checkbox">Perde var</label>
+                 <label>Temel tipi<select id="predFoundation"><option value="radye">Radye</option><option value="ankastre_taban">Ankastre taban</option></select></label>
+                 <label>Perde say&#305;s&#305;<input id="predWallCount" type="number" value="0" min="0" step="1"></label>
+                 <label>Perde kal&#305;nl&#305;&#287;&#305; m<input id="predWallThickness" type="number" value="0.25" min="0" step="0.05"></label>
+                 <label>Perde uzunlu&#287;u m<input id="predWallLength" type="number" value="2.5" min="0" step="0.5"></label>
+                 <label>Perde donat&#305; oran&#305;<input id="predWallRebarRatio" type="number" value="0.0025" min="0" step="0.0005"></label>
+               </div>
+              <div id="predictionResult" class="ml-panel"></div>
+            </section>
+          </div>
+        </form>
+      </section>
+
+      <aside class="side">
+        <section class="status">
+          <div class="status-line">
+            <span id="stateText">Hazır</span>
+            <span id="progressText">0 / 0</span>
+          </div>
+          <div class="meter"><span id="progressBar"></span></div>
+          <div class="stats">
+            <div><b id="successCount">0</b><span>Başarılı</span></div>
+            <div><b id="failedCount">0</b><span>Başarısız</span></div>
+          </div>
+          <p id="outputPath"></p>
+        </section>
+
+
+        <section>
+          <h2>Aday Önizleme</h2>
+          <div id="previewList" class="preview-list"></div>
+        </section>
+
+        <section>
+          <h2>Model Temsili Görselleri</h2>
+          <div class="preview-toolbar">
+            <input id="previewSearch" type="search" placeholder="Model ara">
+            <select id="previewRunFilter">
+              <option value="">Tüm run klasörleri</option>
+            </select>
+            <span id="previewPageInfo" class="preview-page-info"></span>
+          </div>
+          <div id="previewGallery" class="preview-gallery"></div>
+          <div id="previewPagination" class="preview-pagination" aria-label="Model görseli sayfaları"></div>
+        </section>
+
+        <section>
+          <h2>Log</h2>
+          <pre id="logBox"></pre>
+        </section>
+      </aside>
+    </main>
+
+    <div id="previewModal" class="modal" hidden>
+      <div class="modal-backdrop" data-close-preview></div>
+      <div class="modal-panel">
+        <div class="modal-head">
+          <h2 id="previewModalTitle">Model görseli</h2>
+          <button type="button" data-close-preview>Kapat</button>
+        </div>
+        <img id="previewModalImage" alt="Model görseli">
+      </div>
+    </div>
+
+    <script src="/static/app.js?v=20260625somrepresentative1"></script>
+  </body>
+</html>

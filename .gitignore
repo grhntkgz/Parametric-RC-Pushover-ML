@@ -1,0 +1,44 @@
+# Python cache and local runtime files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environment files
+.env
+.venv/
+venv/
+env/
+
+# SAP2000 generated analysis/model outputs
+generated_models*/
+sap2000_generated_models/
+*.sdb
+*.s2k
+*.msh
+*.OUT
+*.out
+*.log
+fort.*
+
+# Generated metadata, previews, and analysis exports
+models_metadata.csv
+*_metadata.json
+*_preview.svg
+hinge_validation/
+raw_exports/
+
+# Machine learning/SOM trained artifacts
+ml_model*.json
+ml_training_cache.jsonl
+ml_snapshots/
+*.joblib
+som_model.json
+
+# OS/editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

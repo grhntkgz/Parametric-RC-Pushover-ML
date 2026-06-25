@@ -1,0 +1,308 @@
+ 
+©COMPUTERS AND STRUCTURES, INC., JULY 2016 
+TECHNICAL NOTE 
+PARAMETRIC P-M2-M3 HINGE MODEL 
+ 
+Overview  
+This technical note describes the Parametric P-M2-M3 hinge model, a non-
+linear frame hinge model that can couple the behavior in the axial and bend-
+ing directions. Here P is the axial force, M2 the minor bending moment, and 
+M3 the major bending moment. 
+The Parametric P-M2-M3 hinges use a P-M-M yield surface that is similar to 
+that described in El-Tawil and Deierlein (2001). This document is intended 
+to explain the fundamental concepts of the Parametric P-M2-M3 behavior. 
+For details regarding the definition of the Parametric  P-M2-M3 parameters, 
+please see the Hinge Property Data form Help page in the program. 
+Two types of Parametric P-M2-M3 hinges are available: steel and concrete 
+P-M2-M3 hinges. The two types of hinges differ only in the yield surface 
+used. The Parametric Steel P-M2-M3 hinge is intended to model steel sec-
+tions while the Param etric Concrete P -M2-M3 hinge is intended to model 
+reinforced concrete sections. 
+Plasticity and Strain Hardening 
+The Parametric P-M2-M3 hinge uses plasticity theory to model P -M2-M3 
+interaction. This section discusses the general concepts for plasticity theory 
+while subsequent sections will discuss specific behaviors of the Parametric 
+P-M2-M3 hinge. 
+For biaxial stress, an elastic- plastic material has a yield surface, as shown in 
+Figure 1. If the stress point is inside the yield surface the material is elastic. If 
+the stress point is on the yield surface the material is yielded, and its behavior 
+is elastic-plastic. Stress points outside the yield surface are not allowed. 
+The yield surface thus defi nes the strength of the material under biaxial 
+stress. Plasticity theory defines the behavior of the material after it reaches 
+ 1 
+  Plasticity and Strain Hardening 2 
+the yield surface (i.e. after it yields). The ingredients of the theory are essen-
+tially as follows: 
+1. As long as the stress point stays on the yield surface, the material stays in 
+a yielded state. However, the stress point does not remain in one place. 
+The stresses can change after yield, even though the material is elastic -
+perfectly-plastic (e- p-p), which means that the stress point can move 
+around the surface. The stress does not change after yield for an e- p-p 
+material under for uniaxial stress, and hence biaxial stress is fundamen-
+tally different from uniaxial stress.  
+2. Point A in Figure 1 shows a yielded  state defined by stresses 𝜎𝜎
+1𝐴𝐴 and  
+𝜎𝜎1𝐵𝐵. S uppose that strain increments Δ 𝜀𝜀1 and Δ𝜀𝜀2 are imposed, causing 
+the stresses to change to  𝜎𝜎2𝐴𝐴 and 𝜎𝜎2𝐵𝐵 at point B. Plasticity theory says 
+that some of the strain increment is an elastic increment and the re main-
+der is plastic flow. The elastic part of the strain causes the change in 
+stress. The plastic part causes no change in stress. This is why the behav-
+ior is referred to as elastic -plastic. For yield of an e -p-p material under 
+uniaxial stress there is no s tress change after yield. Hence, all of the 
+strain after yield is plastic strain.  
+ 
+Figure 1   Some Features of the Yield Surface 
+3. Plasticity theory also defines the direction of plastic flow. That is, it de-
+fines the ratio between the 1- axis and 2- axis components of the plastic 
+
+  Plasticity and Strain Hardening 3 
+strain. Essentially, the theory states that the direction of plastic flow is 
+normal to the yield surface. For example, consider uniaxial stress along 
+the 1-axis. As shown in Figure 1, the stress path is OC, and yield occurs 
+at point C. After yield, the stress stays constant, and hence all subsequent 
+strain is plastic. The normal to the yield surface at point C has 1 -axis and 
+2-axis components in the ratio 2:1. Hence, the plastic strains  are in this 
+ratio, and the value of Poisson's ratio is 0.5 for plastic deformation. 
+The theory can be extended from the e -p-p case to the case with strain hard-
+ening. There are many hardening theories; t he Parametric P-M2-M3 hinge 
+uses the Mroz theory for strain hardening. For the case of trilinear behavior 
+the Mroz theory is illustrated in Figure 2. 
+There are two yield surfaces, namely a Y surface (initial yield) and a larger U 
+surface (ultimate strength). These surfaces both have the same shape. If the 
+stress point is inside the Y surface the material is elastic. If the material is on 
+the Y surface the material is elastic- plastic-strain-hardening. As the material 
+hardens the Y surface moves, as indicated in the figure. When the stress point 
+reaches the U s urface, the material is elastic- plastic, as in the e- p-p case. 
+Among other things, the Mroz theory specifies how the Y surface moves as 
+the material strain hardens.  
+ 
+Figure 2   Trilinear Behavior with Mroz Theory 
+
+  Extension to P-M2-M3 Interaction 4 
+Extension to P-M2-M3 Interaction  
+Plasticity theory models the interaction between the material stresses 𝜎𝜎1 and 
+𝜎𝜎2. By analogy, plasticity theory can be extend to P -M2-M3 interaction in a 
+column, where the axial force, P, and the bending moments, M2 and M3, 
+interact with each other. For the e -p-p case, the yield surface is now the P -M 
+strength interaction surface for the column section. Note that because plastic 
+flow is normal to the yield surface, the P-M2-M3 hinge will generally extend 
+or shorten axially as it yields in bending. 
+When used for steel sections, plasticity theory can correctly account for P -M 
+interaction. Analyses of more complex cross sections show that plasticity 
+theory can make reasonably accurate predictions of steel cross section behav-
+ior. Hence, inelastic hinges based on plas ticity theory can be used to model 
+steel columns with P -M interaction, for both pushover and dynamic earth-
+quake analyses. 
+Plasticity theory does a mediocre job of modeling reinforced concrete behav-
+ior. The main error, especially for cyclic loading, is that  for axial forces be-
+low the balance point, plasticity theory predicts plastic strain in tension after 
+the yield surface is reached, for both bending directions. Hence, under cyclic 
+bending the theory predicts that the column will progressively increase in 
+length, possibly overestimating the axial growth for a reinforced concrete 
+column. However, some growth is to be expected since the concrete resists 
+compression but not tension. 
+It is suggested to consider Fiber P -M2-M3 hinges for cases where axial de-
+formation is significant to the structural behavior. In contrast to plasticity -
+based hinges, Fiber P -M2-M3 hinges allow for more accurate calculation of 
+the axial deformation because the uniaxial stress-strain relationships and hys-
+teretic behavior of each of th e individual fibers are considered. However, 
+Fiber P-M2-M3 hinges may be computationally less efficient than plasticity-
+based hinges, especially when many fibers are used.  
+Yield Surface for a Parametric Steel P-M2-M3 Hinge  
+Figure 3 shows the yield surface for a steel section. The equations of the 
+yield surface are essentially as follows. 
+In each P-M plane (P-M2 and P-M3):  
+  Yield Surface for a Parametric Concrete P-M2-M3 Hinge 5 
+ 𝑓𝑓𝑃𝑃𝑃𝑃= � 𝑃𝑃
+𝑃𝑃𝑌𝑌0
+�
+𝛼𝛼
++ � 𝑀𝑀
+𝑀𝑀𝑌𝑌0
+�
+𝛽𝛽
+ (1) 
+where 𝑓𝑓𝑃𝑃𝑃𝑃 = yield function value = 1.0 for yielding , P = axial force, M = 
+bending moment, 𝑃𝑃𝑌𝑌0 = yield force at M = 0 , and 𝑀𝑀𝑌𝑌0 = yield moment at P = 
+0. 
+Different values for the exponent 𝛼𝛼 and the yield force 𝑃𝑃𝑌𝑌0 can be specified 
+for tension and compression. Different values for the exponent 𝛼𝛼 can also be 
+used in the P-M2 and P-M3 planes. 
+For any value of P, Equation (1) defines the M values at which yield occurs, 
+in both the P-M2 and P-M3 planes (put 𝑓𝑓𝑃𝑃𝑃𝑃 = 1 and solve for M ). Call these 
+values 𝑀𝑀2𝑌𝑌𝑃𝑃 and 𝑀𝑀3𝑌𝑌𝑃𝑃. The yield function in the M2-M3 plane is then:  
+ 𝑓𝑓𝑃𝑃𝑃𝑃= � 𝑀𝑀2
+𝑀𝑀2𝑌𝑌𝑃𝑃
+�
+𝛾𝛾
++ � 𝑀𝑀3
+𝑀𝑀3𝑌𝑌𝑃𝑃
+�
+𝛽𝛽
+ (2) 
+ 
+ 
+Figure 3   Yield Surface for a Parametric Steel P-M2-M3 Hinge 
+Yield Surface for a Parametric Concrete P-M2-M3 
+Hinge  
+Figure 4 shows the yield surface for a concrete section. The equations of the 
+yield surface are essentially as follows. 
+
+  Force-Deformation Behavior 6 
+In each P-M plane (P-M2 and P-M3):  
+ 𝑓𝑓𝑃𝑃𝑃𝑃= � 𝑃𝑃− 𝑃𝑃𝐵𝐵
+𝑃𝑃𝑌𝑌0 − 𝑃𝑃𝐵𝐵
+�
+𝛼𝛼
++ � 𝑀𝑀
+𝑀𝑀𝑌𝑌𝐵𝐵
+�
+𝛽𝛽
+ (3) 
+where 𝑓𝑓𝑃𝑃𝑃𝑃  = yield function value, = 1.0 for yield, P = axial force, 𝑃𝑃𝐵𝐵 = axial 
+force at balance point (assumed to be the same in both P -M planes), M = 
+bending moment, 𝑃𝑃𝑌𝑌0 = yield force at M = 0 , and 𝑀𝑀𝑌𝑌0 = yield moment at P 
+= 𝑃𝑃𝐵𝐵. 
+Different values for the exponent 𝛼𝛼 and the yield force 𝑃𝑃𝑌𝑌0 can be specified 
+for tension and compression. Different values for the exponent 𝛼𝛼 can also be 
+used in the P-M2 and P-M3 planes. 
+For any value of P, Equation (3) defines the M values at which yield occurs, 
+in both the P -M2 and P-M3 planes (put 𝑓𝑓𝑃𝑃𝑃𝑃 = 1 and solve for M). The yield 
+function in the M2-M3 plane is then given by Equation (2). 
+ 
+Figure 4   Yield Surface for a Parametric Concrete P-M2-M3 Hinge 
+Force-Deformation Behavior 
+Figure 5 shows the uniaxial force-deformation behavior of the Parametric P-
+M2-M3 hinge. The Parametric P-M2-M3 hinge behaves essentially rigid up 
+to the yield point  (the B point on the backbone curve) . The behavior can be 
+trilinear or elastic-perfectly-plastic – for trilinear behavior, the U point can be 
+
+  Force-Deformation Behavior 7 
+specified with a strength larger than that at the B point. The force is constant 
+between the U and C points. Strength loss is optional and is controlled by the 
+slope between the C and D points . The force is constant between points D 
+and E, which extends indefinitely, representing residual strength in the hinge. 
+The deformation at Points D and E cannot be explicitly specified in the axial 
+direction because the onset of strength loss is determined based on bending 
+deformations only.  
+The yield (Point B), ultimate (Point U), and residual (Point D) strengths can 
+be independently specified for the following directions: 
+1. Compression, assuming M2 = M3 = 0 
+2. Tension, assuming M2 = M3 = 0 
+3. Bending moment around axis 2, M2, assuming M3 = 0 and P  = 0 for the 
+steel hinge or P = PB for the concrete hinge.  
+4. Bending moment around axis 3, M3, assuming M2 = 0 and P  = 0 for the 
+steel hinge or P = PB for the concrete hinge.  
+The yield surfaces for P -M2-M3 interaction of this hinge only allows for 
+doubly-symmetrical cross sections with equ al positive and negative bending 
+strengths each for M2 and M3.  
+ 
+Figure 5   Uniaxial Behavior 
+
+  Strength Loss 8 
+Strength Loss 
+For the onset of strength loss (the C point on the backbone curve), the P -M2-
+M3 hinges uses bending deformations only (i.e., axial deformations are  not 
+considered).  
+When you specify the C point for strength loss you must specify C point 
+bending deformations about both Axis 2 and Axis 3. The C point is reached 
+when the following equation is satisfied: 
+� 𝐷𝐷2
+𝐷𝐷2𝐶𝐶�
+2
++ � 𝐷𝐷3
+𝐷𝐷3𝐶𝐶�
+2
+= 1 (4) 
+where D2, D3 are the current bending deformations about Axes 2 and 3, and 
+D2C, D3C are the C point deformations. 
+You must also specify the ratio between the C  point strength and the D point 
+strength. You can specify one ratio for bending moment and a different ratio 
+for axial force. If you specify the same ratio for axial force as for bending, as 
+the hinge loses strength the yield surface decreases in size without changing 
+shape. If you specify different ratios, the yield surface reduces in size and 
+changes shape.  
+When you specify the E  point must specify E -point bending deformations 
+about both Axis 2 and Axis 3, and also an E -point axial deformation. These 
+bending and axial deformations are checked separately. The E  point is 
+reached when either deformation exceeds the  corresponding E-point defor-
+mation, whichever occurs first. 
+The E point in bending is reached when the following equation is satisfied: 
+� 𝐷𝐷2
+𝐷𝐷2𝐸𝐸�
+2
++ � 𝐷𝐷3
+𝐷𝐷3𝐸𝐸�
+2
+= 1 (5) 
+where D2, D3 are the current bending deformations about Axes 2 and 3, and 
+D2E, D3E are the E point deformations.  
+After strength loss occurs for trilinear behavior, the behavior is assumed to 
+become elastic-perfectly-plastic. 
+  Energy Degradation 9 
+Energy Degradation 
+This section describes the behavior of energy degradation on the hysteretic 
+shape of the Parametric P-M2-M3 hinge. Figure 6 shows a loop for the e -p-p 
+case with energy degradation for the uniaxial case. The axial and bending 
+stiffnesses are both reduced, in the same proportion.  
+ 
+Figure 6   Degraded Loop for E-P-P Behavior 
+The following method is used to set the loop properties: 
+1. As part of the hinge definition, a relationship can be specified between 
+the deformation of the hinge and the corresponding energy degradation 
+factor. This factor is the area of the degraded hysteresis loop divided by 
+the area of the non-degraded loop. 
+2. For the current state of the hinge, 𝑒𝑒
+𝑝𝑝𝑝𝑝𝑝𝑝 and 𝑒𝑒𝑛𝑛𝑛𝑛𝑛𝑛 are the energy degrada-
+tion factors at the maximum positive and negative deformations. Note 
+that these are the maximum deformations up to the current point in the 
+analysis, not necessarily the deformations at the limits of the current de-
+formation cycle. 
+3. The energy degradation factor, 𝑒𝑒, for the loop as a whole is the larger of 
+𝑒𝑒𝑝𝑝𝑝𝑝𝑝𝑝 and 𝑒𝑒𝑛𝑛𝑛𝑛𝑛𝑛. The degraded unloading stiffness is calculated to make 
+the area of the degrad ed loop equal to 𝑒𝑒 times the area of the non -
+degraded loop. 
+The behavior of energy degradation for the trilinear case is shown in Figure 
+7. Figure 7(a) shows the case where the positive and negative deformation 
+
+  Deformation Capacity Ratios 10 
+are both smaller than the U point deformation. The energy dissipation factor, 
+𝑒𝑒, is calculated as for the e- p-p case. The hardening stiffness is kept constant 
+and only the elastic stiffness is reduced for the unloading branch – this results 
+in an increase in the elastic deformation range and the elastic force range.  
+Figure 7(b) shows the case where the positive and negative deformations are 
+both larger than the U point deformation. The energy degradation in this case 
+is a combination of that shown in Figure 6 and 7(a).  
+ 
+Figure 7   Degraded Loop for Trilinear Behavior: (a) Before U Point, (b) After U 
+Point 
+Deformation Capacity Ratios 
+For deformation demand-capacity ratios, the Parametric P-M2-M3 hinge uses 
+bending deformations only.  
+When you specify the deformation capacities, you can specify bending de-
+formation capacities for up to 3 performance levels (called IO, LS, and CP) . 
+The deformation demand-capacity ratio is calculated as follows:  
+𝐷𝐷/𝐶𝐶 𝑅𝑅𝑅𝑅𝑅𝑅𝑅𝑅𝑅𝑅=  � � 𝐷𝐷2
+𝐷𝐷2𝑐𝑐𝑐𝑐𝑝𝑝
+�
+2
++ � 𝐷𝐷3
+𝐷𝐷3𝑐𝑐𝑐𝑐𝑝𝑝
+�
+2
+ (6) 
+
+  References 11 
+where D2, D3 are the current bending deformations about Axes 2 and 3, and 
+𝐷𝐷2𝑐𝑐𝑐𝑐𝑝𝑝, 𝐷𝐷3𝑐𝑐𝑐𝑐𝑝𝑝 are the deformation capacities at a given performance level. 
+For steel P -M2-M3 hinges you can specify that the deformation capacities 
+depend on the axial force. For a concre te P -M2-M3 hinge you can specify 
+that the deformation capacities depend on both the axial force and the shear 
+force. 
+References 
+El-Tawil, S. and Deierlein, G. “Nonlinear Analysis of Mixed Steel -Concrete 
+Frames, I: Element Formulation.” Journal of Structura l Engineering , 
+Vol. 126, No. 6, June 2001. 
+El-Tawil, S. and Deierlein, G. “Nonlinear Analysis of Mixed Steel -Concrete 
+Frames, II: Implementation and Verification.” Journal of Structural En-
+gineering, Vol. 126, No. 6, June 2001. 
