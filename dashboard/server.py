@@ -29,7 +29,7 @@ from fema440 import calculate_fema440_by_direction  # noqa: E402
 from ml_model import ml_status, predict_ml, reset_ml_model, save_ml_snapshot, train_ml_model  # noqa: E402
 from model_generator import _model_file_stem, _random_candidate, _refresh_successful_exact_export_models, _rewrite_exact_export_summary, generate_models  # noqa: E402
 from sap_hinge_validation import calibrate_proxy, compare_proxy_with_exact, import_hinge_exports, select_validation_subset  # noqa: E402
-from som_model import optimize_som_grid, som_status, train_som  # noqa: E402
+from som_model import DEFAULT_X_COLUMNS, RESULT_METRICS, TARGET_LEAKAGE_MESSAGE, X_COLUMNS, optimize_som_grid, som_status, train_som  # noqa: E402
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -877,6 +877,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._send_json(model_results_inventory(Path(STATE.output_dir)))
         elif path == "/api/ml/status":
             self._send_json(ml_status(Path(STATE.output_dir)))
+        elif path == "/api/som/metadata":
+            self._send_json(
+                {
+                    "available": False,
+                    "x_columns": X_COLUMNS,
+                    "default_x_columns": list(DEFAULT_X_COLUMNS),
+                    "result_metrics": RESULT_METRICS,
+                    "target_leakage_warning": TARGET_LEAKAGE_MESSAGE,
+                }
+            )
         elif path == "/api/som/status":
             self._send_json(som_status(Path(STATE.output_dir)))
         elif path == "/api/artifact":

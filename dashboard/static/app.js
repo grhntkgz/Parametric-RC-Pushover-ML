@@ -350,9 +350,13 @@ async function init() {
     defaults = await fetchJson("/api/defaults");
     hydrateForm(defaults);
     renderStatus(await fetchJson("/api/status"));
-    await refreshMlStatus();
     await refreshSom();
     await refreshArtifacts();
+    window.setTimeout(() => {
+      refreshMlStatus().catch((error) => {
+        if (mlStatus) mlStatus.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
+      });
+    }, 250);
     statusTimer = window.setInterval(pollStatus, 1500);
   } catch (error) {
     logBox.textContent = error.message;
@@ -916,6 +920,14 @@ function fillSelect(select, metrics, selectedKey) {
 
 async function refreshSom() {
   if (!somCanvas) return null;
+  try {
+    const metadata = await fetchJson("/api/som/metadata");
+    populateSomControls(metadata.result_metrics || defaultSomMetrics);
+    renderSomXColumns(metadata);
+    if (somLeakageWarning) somLeakageWarning.textContent = metadata.target_leakage_warning || "Y sonuç değişkenleri SOM eğitim matrisine alınmaz; hedef sızıntısı engellenir.";
+  } catch (_error) {
+    // Full status below will still report the user-facing error if the SOM API is unavailable.
+  }
   const status = await fetchJson("/api/som/status");
   latestSom = status;
   populateSomControls(status.result_metrics || defaultSomMetrics);
