@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,42 +10,40 @@
     <header class="topbar">
       <div>
         <h1>SAP2000 Model Generator</h1>
-        <p>Betonarme model üretimi, ön eleme kontrolleri ve pushover ayar paneli</p>
+        <p>Reinforced concrete model generation, preliminary checks, and pushover control panel</p>
       </div>
       <div class="actions">
-        <button id="previewBtn" type="button">Önizle</button>
-        <button id="clearBtn" type="button" class="danger">Çıktıları Temizle</button>
-        <button id="stopBtn" type="button" class="danger" disabled>Durdur</button>
-        <button id="runBtn" type="button" class="primary">Üretimi Başlat</button>
+        <button id="clearBtn" type="button" class="danger">Clear Outputs</button>
+        <button id="stopBtn" type="button" class="danger" disabled>Stop</button>
+        <button id="runBtn" type="button" class="primary">Start Generation</button>
       </div>
     </header>
 
     <main class="layout">
       <section class="settings">
-        <nav class="tabs" aria-label="Ayar grupları">
-          <button class="tab active" data-tab="general" type="button">Genel</button>
-          <button class="tab" data-tab="geometry" type="button">Geometri</button>
-          <button class="tab" data-tab="materials" type="button">Malzeme</button>
-          <button class="tab" data-tab="rebar" type="button">Donatı</button>
-          <button class="tab" data-tab="foundation" type="button">Temel/Zemin</button>
-          <button class="tab" data-tab="checks" type="button">Kontrol</button>
+        <nav class="tabs" aria-label="Setting groups">
+          <button class="tab active" data-tab="general" type="button">General</button>
+          <button class="tab" data-tab="geometry" type="button">Geometry</button>
+          <button class="tab" data-tab="materials" type="button">Material</button>
+          <button class="tab" data-tab="rebar" type="button">Reinforcement</button>
+          <button class="tab" data-tab="foundation" type="button">Foundation/Soil</button>
+          <button class="tab" data-tab="checks" type="button">Checks</button>
           <button class="tab" data-tab="pushover" type="button">Pushover</button>
-          <button class="tab" data-tab="results" type="button">Sonu&ccedil;lar</button>
-          <button class="tab" data-tab="charts" type="button">Grafikler</button>
-          <button class="tab" data-tab="som" type="button">SOM Analizi</button>
-          <button class="tab" data-tab="machine-learning" type="button">Makine &Ouml;&#287;renmesi</button>
-          <button class="tab" data-tab="prediction" type="button">Tahmin</button>
+          <button class="tab" data-tab="results" type="button">Results</button>
+          <button class="tab" data-tab="charts" type="button">Charts</button>
+          <button class="tab" data-tab="behavior-ml" type="button">Behavior ML</button>
+          <button class="tab" data-tab="machine-learning" type="button">Machine Learning</button>
         </nav>
 
         <form id="configForm">
           <div class="tab-panel active" data-panel="general">
             <div class="grid two">
-              <label>Model adedi<input name="n_iter" type="number" min="1" step="1"></label>
+              <label>Model count<input name="n_iter" type="number" min="1" step="1"></label>
               <label>Random seed<input name="random_seed" type="number" step="1"></label>
-              <label>Maksimum deneme<input name="max_attempts_per_model" type="number" min="1" step="1"></label>
-              <label>Çıktı klasörü<input name="output_dir" type="text"></label>
-              <label>SAP2000 exe yolu<input name="sap2000_exe_path" type="text"></label>
-              <label class="check"><input name="keep_sap_open" type="checkbox">SAP2000 açık kalsın</label>
+              <label>Maximum attempts<input name="max_attempts_per_model" type="number" min="1" step="1"></label>
+              <label>Output folder<input name="output_dir" type="text"></label>
+              <label>SAP2000 exe path<input name="sap2000_exe_path" type="text"></label>
+              <label class="check"><input name="keep_sap_open" type="checkbox">Keep SAP2000 open</label>
             </div>
           </div>
 
@@ -53,58 +51,58 @@
                <div class="grid three">
               <label>Kat min
                 <input name="story_count_min" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TBDY kat say&#305;s&#305;n&#305; tek ba&#351;&#305;na s&#305;n&#305;rlamaz; d&uuml;zensizlik ve g&ouml;reli kat &ouml;telemesi ayr&#305;ca kontrol edilir. Yayg&#305;n: 4-8 kat orta katl&#305; sentetik veri aral&#305;&#287;&#305;d&#305;r.</span>
+                <span class="field-note">Code/pre-screening: TBDY does not limit story count by itself; irregularity and interstory drift checks are evaluated separately. Common range: 4-8 stories for mid-rise synthetic data.</span>
               </label>
               <label>Kat max
                 <input name="story_count_max" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kat artt&#305;k&ccedil;a ikinci mertebe, narinlik ve &ouml;teleme kontrolleri kritikle&#351;ir. Yayg&#305;n: 6-8 kat i&ccedil;in daha b&uuml;y&uuml;k kolon ve kiri&#351; kesitleri se&ccedil;ilir.</span>
+                <span class="field-note">Code/pre-screening: As story count increases, second-order effects, slenderness, and drift checks become more critical. Common practice: larger column and beam sections for 6-8 story buildings.</span>
               </label>
-              <label>X a&ccedil;&#305;kl&#305;k min
+              <label>X bay min
                 <input name="x_bay_count_min" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: D&uuml;zenli ta&#351;&#305;y&#305;c&#305; sistem ve burulma kontrol&uuml; i&ccedil;in iki do&#287;rultuda s&uuml;reklilik istenir. Yayg&#305;n: En az 2, pratikte 3-5 a&ccedil;&#305;kl&#305;k.</span>
+                <span class="field-note">Code/pre-screening: Regular lateral systems and torsional control require continuity in both directions. Common practice: at least 2 bays, typically 3-5 bays.</span>
               </label>
-              <label>X a&ccedil;&#305;kl&#305;k max
+              <label>X bay max
                 <input name="x_bay_count_max" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Aks say&#305;s&#305; artt&#305;k&ccedil;a plan d&uuml;zensizli&#287;i ve analiz boyutu izlenir. Yayg&#305;n: Parametrik &ccedil;al&#305;&#351;malarda X y&ouml;n&uuml; 3-5 a&ccedil;&#305;kl&#305;k.</span>
+                <span class="field-note">Code/pre-screening: As grid count increases, plan irregularity and analysis size should be monitored. Common practice: 3-5 bays in the X direction for parametric studies.</span>
               </label>
-              <label>Y a&ccedil;&#305;kl&#305;k min
+              <label>Y bay min
                 <input name="y_bay_count_min" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Tek do&#287;rultulu zay&#305;f planlardan ka&ccedil;&#305;nmak i&ccedil;in Y y&ouml;n&uuml;nde de en az 2 a&ccedil;&#305;kl&#305;k tercih edilir. Yayg&#305;n: 2-4 a&ccedil;&#305;kl&#305;k.</span>
+                <span class="field-note">Code/pre-screening: At least 2 bays in the Y direction are preferred to avoid weak one-directional plans. Common practice: 2-4 bays.</span>
               </label>
-              <label>Y a&ccedil;&#305;kl&#305;k max
+              <label>Y bay max
                 <input name="y_bay_count_max" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: B&uuml;y&uuml;k/asimetrik planlar burulma d&uuml;zensizli&#287;i kontrol&uuml; gerektirir. Yayg&#305;n: 2-4 a&ccedil;&#305;kl&#305;k dengeli veri seti verir.</span>
+                <span class="field-note">Code/pre-screening: Large or asymmetric plans require torsional irregularity checks. Common practice: 2-4 bays provides a balanced dataset.</span>
               </label>
-              <label>A&ccedil;&#305;kl&#305;k min m
+              <label>Span min m
                 <input name="bay_length_min_m" type="number" min="0" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Minimum a&ccedil;&#305;kl&#305;k do&#287;rudan verilmez; eleman boyutu, rijitlik ve mimari kullan&#305;m ile kontrol edilir. Yayg&#305;n: 4.0 m alt s&#305;n&#305;r.</span>
+                <span class="field-note">Code/pre-screening: Minimum span is not prescribed directly; it is governed by member size, stiffness, and architectural use. Common lower bound: 4.0 m.</span>
               </label>
-              <label>A&ccedil;&#305;kl&#305;k max m
+              <label>Span max m
                 <input name="bay_length_max_m" type="number" min="0" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Uzun a&ccedil;&#305;kl&#305;kta sehim ve L/h kontrol&uuml; belirleyicidir; burada L/h &lt;= 15 &ouml;n elemesi uygulan&#305;r. Yayg&#305;n: 6-7 m &uuml;st pratik s&#305;n&#305;r.</span>
+                <span class="field-note">Code/pre-screening: For long spans, deflection and L/h checks are controlling; this generator applies an L/h <= 15 pre-check. Common practical upper range: 6-7 m.</span>
               </label>
-              <label>A&ccedil;&#305;kl&#305;k ad&#305;m&#305; m
+              <label>Span step m
                 <input name="bay_length_step_m" type="number" min="0.1" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kod s&#305;n&#305;r&#305; de&#287;ildir; parametrik ayr&#305;kla&#351;t&#305;rma se&ccedil;imidir. Yayg&#305;n: 0.5 m ad&#305;m okunabilir varyasyon sa&#287;lar.</span>
+                <span class="field-note">Code/pre-screening: This is not a code limit; it is a parametric discretization choice. Common step: 0.5 m for readable variation.</span>
               </label>
-              <label>Kat y&uuml;ksekli&#287;i min m
+              <label>Story height min m
                 <input name="story_height_min_m" type="number" min="0" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kat y&uuml;ksekli&#287;i artt&#305;k&ccedil;a g&ouml;reli &ouml;teleme kontrol&uuml; zorla&#351;&#305;r. Yayg&#305;n: Konut/ofis i&ccedil;in 3.0 m civar&#305;.</span>
+                <span class="field-note">Code/pre-screening: Larger story height makes interstory drift checks more demanding. Common value: around 3.0 m for residential/office buildings.</span>
               </label>
-              <label>Kat y&uuml;ksekli&#287;i max m
+              <label>Story height max m
                 <input name="story_height_max_m" type="number" min="0" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Yumu&#351;ak kat ve narinlik etkileri izlenir. Yayg&#305;n: 3.2-3.5 m; daha y&uuml;ksek katlar ayr&#305; kontrol ister.</span>
+                <span class="field-note">Code/pre-screening: Soft-story and slenderness effects should be monitored. Common range: 3.2-3.5 m; taller stories require separate checks.</span>
               </label>
-              <label>Kat y&uuml;ksekli&#287;i ad&#305;m&#305; m
+              <label>Story height step m
                 <input name="story_height_step_m" type="number" min="0.1" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kod s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n: 0.1 m ad&#305;m hassas ama okunabilir parametrik de&#287;i&#351;im verir.</span>
+                <span class="field-note">Code/pre-screening: This is not a code limit. Common step: 0.1 m for sensitive but readable parametric variation.</span>
               </label>
             </div>
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>Kolon kesitleri</h2>
-                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY betonarme kolonlarda en k&uuml;&ccedil;&uuml;k boyut i&ccedil;in 30 cm mertebesi alt s&#305;n&#305;r olarak al&#305;n&#305;r; bu yaz&#305;l&#305;mda 30 cm alt&#305; elenir. Perde i&ccedil;in TBDY tan&#305;m&#305; l<sub>w</sub>/t<sub>w</sub> &ge; 6 olup perde g&ouml;vde kal&#305;nl&#305;&#287;&#305; genel durumda kat y&uuml;ksekli&#287;inin 1/16's&#305;ndan ve 250 mm'den k&uuml;&ccedil;&uuml;k al&#305;nmaz. Yayg&#305;n: 4-5 katta 40x40-50x50 cm kolonlar, 6-8 katta 50x50-70x70 cm kolonlar; perdelerde 25-30 cm kal&#305;nl&#305;k ve yakla&#351;&#305;k 1.5-4.0 m uzunluk s&#305;k g&ouml;r&uuml;l&uuml;r.</p>
+                  <h2>Column sections</h2>
+                  <p class="section-note">Code/pre-screening: For RC columns, a minimum dimension around 30 cm is treated as the lower limit; this software rejects columns below 30 cm. For shear walls, TBDY defines l_w/t_w >= 6, and typical wall web thickness should not be less than story height/16 or 250 mm. Common practice: 40x40-50x50 cm columns for 4-5 stories, 50x50-70x70 cm for 6-8 stories; shear walls often use 25-30 cm thickness and about 1.5-4.0 m length.</p>
                 </div>
                 <button id="addColumnSection" type="button">Ekle</button>
               </div>
@@ -113,8 +111,8 @@
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>Kiri&#351; kesitleri</h2>
-                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351; geni&#351;li&#287;i i&ccedil;in 25 cm, y&uuml;kseklik i&ccedil;in 50 cm alt s&#305;n&#305;r; ayr&#305;ca L/h &lt;= 15 &ouml;n kontrol&uuml;. Yayg&#305;n: 25x50, 30x50, 30x60, 35x60, 35x70 cm.</p>
+                  <h2>Beam sections</h2>
+                  <p class="section-note">Code/pre-screening: Minimum beam width is 25 cm and minimum depth is 50 cm; an L/h <= 15 pre-check is also applied. Common sections: 25x50, 30x50, 30x60, 35x60, 35x70 cm.</p>
                 </div>
                 <button id="addBeamSection" type="button">Ekle</button>
               </div>
@@ -123,90 +121,90 @@
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>D&ouml;&#351;eme parametreleri</h2>
-                  <p class="section-note">Bu jenerat&ouml;r kiri&#351;li plak d&ouml;&#351;emeyi her katta ve her aks a&ccedil;&#305;kl&#305;&#287;&#305;nda yatay shell panel olarak modeller. Rijit diyafram atamas&#305; da korunur. Y&ouml;netmelik/&ouml;n eleme: TBDY 2018 B&ouml;l&uuml;m 7.11 d&ouml;&#351;emelerin deprem kuvvetlerini d&uuml;&#351;ey ta&#351;&#305;y&#305;c&#305; elemanlara g&uuml;venle aktarmas&#305;n&#305; ister; kiri&#351;li plak kal&#305;nl&#305;&#287;&#305; i&ccedil;in TS 500 ko&#351;ullar&#305; kullan&#305;l&#305;r. TBDY 7.11.3 kapsam&#305;ndaki elastik diyafram d&uuml;zlem i&ccedil;i gerilme kontrol&uuml; bu a&#351;amada placeholder'd&#305;r; rijit diyaframl&#305; &ouml;n model nihai d&ouml;&#351;eme tasar&#305;m&#305; de&#287;ildir. Yayg&#305;n: Konut/ofis binalar&#305;nda 0.15-0.20 m, daha uzun a&ccedil;&#305;kl&#305;klarda 0.20-0.25 m ba&#351;lang&#305;&ccedil; aday&#305;d&#305;r.</p>
+                  <h2>Slab parameters</h2>
+                  <p class="section-note">This generator models beam-supported slab panels as horizontal shell areas at every story and bay. Rigid diaphragm assignment is preserved. Code/pre-screening: TBDY 2018 Section 7.11 requires slabs to transfer seismic forces safely to vertical resisting members; TS 500 conditions are used for slab thickness. The TBDY 7.11.3 in-plane elastic diaphragm stress check is a placeholder at this stage; this rigid-diaphragm preliminary model is not a final slab design. Common practice: 0.15-0.20 m in residential/office buildings, and 0.20-0.25 m for longer spans.</p>
                 </div>
               </div>
               <div class="grid three">
-                <label class="check"><input name="enable_floor_slabs" type="checkbox">Kat d&ouml;&#351;emelerini shell modelle
-                  <span class="field-note">A&ccedil;&#305;ksa her katta her kiri&#351;li aks paneli i&ccedil;in yatay shell alan olu&#351;turulur. Bu se&ccedil;enek yap&#305;sal model i&ccedil;in &ouml;nerilir.</span>
+                <label class="check"><input name="enable_floor_slabs" type="checkbox">Model floor slabs as shells
+                  <span class="field-note">If enabled, horizontal shell areas are created for each beam-supported bay panel at every story. This option is recommended for the structural model.</span>
                 </label>
-                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; min m
+                <label>Slab thickness min m
                   <input name="slab_thickness_min_m" type="number" min="0.08" step="0.01">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TS 500 kiri&#351;li s&uuml;rekli plaklarda a&ccedil;&#305;kl&#305;k/kal&#305;nl&#305;k kontrol&uuml; ister; bu jenerat&ouml;rde ayr&#305;ca mutlak alt s&#305;n&#305;r uygulan&#305;r. Yayg&#305;n: 0.15 m.</span>
+                  <span class="field-note">Code/pre-screening: TS 500 requires span/thickness control for continuous beam-supported slabs; this generator also applies an absolute lower limit. Common value: 0.15 m.</span>
                 </label>
-                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; max m
+                <label>Slab thickness max m
                   <input name="slab_thickness_max_m" type="number" min="0.08" step="0.01">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje hesab&#305;yla belirlenir. Yayg&#305;n: Kiri&#351;li plaklarda 0.20-0.25 m &uuml;st aday aral&#305;&#287;&#305;.</span>
+                  <span class="field-note">Code/pre-screening: The upper limit is project-specific. Common upper candidate range for beam-supported slabs: 0.20-0.25 m.</span>
                 </label>
-                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+                <label>Slab thickness step m
                   <input name="slab_thickness_step_m" type="number" min="0.01" step="0.01">
-                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.01 m.</span>
+                  <span class="field-note">This is not a code limit. Common parametric step: 0.01 m.</span>
                 </label>
               </div>
             </div>
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>Perde boyutu notu</h2>
-                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY 2018'e g&ouml;re betonarme perde, planda uzun kenar&#305;n&#305;n kal&#305;nl&#305;&#287;&#305;na oran&#305; en az 6 olan d&uuml;&#351;ey ta&#351;&#305;y&#305;c&#305; elemand&#305;r; yani l<sub>w</sub>/t<sub>w</sub> &ge; 6. Perde g&ouml;vde kal&#305;nl&#305;&#287;&#305; genel durumda kat y&uuml;ksekli&#287;inin 1/16's&#305;ndan ve 250 mm'den k&uuml;&ccedil;&uuml;k al&#305;nmaz; iki ucu yanal tutulu baz&#305; perde kollar&#305;nda 1/20 ko&#351;ulu de&#287;erlendirilebilir. Yayg&#305;n: T&uuml;rkiye'de konut/ofis projelerinde perde kal&#305;nl&#305;&#287;&#305; &ccedil;o&#287;unlukla 25-30 cm, perde uzunlu&#287;u yakla&#351;&#305;k 1.5-4.0 m aral&#305;&#287;&#305;nda se&ccedil;ilir. Bu jenerat&ouml;r perde panellerini hem X hem Y do&#287;rultusunda, kolon akslar&#305; aras&#305;na shell eleman olarak ekler.</p>
+                  <h2>Shear wall dimension note</h2>
+                  <p class="section-note">Code/pre-screening: According to TBDY 2018, an RC shear wall is a vertical resisting member whose plan length-to-thickness ratio is at least 6, i.e. l_w/t_w >= 6. Wall web thickness should generally not be less than story height/16 or 250 mm; a 1/20 condition may be considered for some laterally restrained wall segments. Common practice in Turkey: 25-30 cm wall thickness and about 1.5-4.0 m wall length in residential/office projects. The generator adds wall panels in both X and Y directions between column grid lines as shell elements.</p>
                 </div>
               </div>
             </div>
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>Perde parametreleri</h2>
-                  <p class="section-note">Kolon kesiti se&ccedil;imi perdeden ba&#287;&#305;ms&#305;zd&#305;r. Bu se&ccedil;enek a&ccedil;&#305;ksa kolonlar ayn&#305; kal&#305;r; ilave perde panelleri hem X hem Y do&#287;rultusunda se&ccedil;ilen akslar aras&#305;na shell eleman olarak eklenir. Uzun kenar hangi do&#287;rultuda ise o do&#287;rultudaki perde kendi d&uuml;zlemi i&ccedil;inde yatay y&uuml;ke atalet/rijitlik katk&#305;s&#305; verir.</p>
+                  <h2>Shear wall parameters</h2>
+                  <p class="section-note">Column section selection is independent of shear walls. If enabled, columns remain unchanged; additional wall panels are inserted between selected grid lines in both X and Y directions. The wall contributes in-plane inertia/stiffness in the direction of its long edge.</p>
                 </div>
               </div>
               <div class="grid three">
-                <label class="check"><input name="enable_shear_walls" type="checkbox">Perde ekle
-                  <span class="field-note">A&ccedil;&#305;ksa ilave perdeler kolonlardan ba&#287;&#305;ms&#305;z olarak hem X hem Y y&ouml;n&uuml;nde olu&#351;turulur. Yayg&#305;n: Orta katl&#305; konut/ofis sistemlerinde simetrik perde yerle&#351;imi tercih edilir.</span>
+                <label class="check"><input name="enable_shear_walls" type="checkbox">Add shear walls
+                  <span class="field-note">If enabled, additional walls are created independently of columns in both X and Y directions. Common practice: symmetric wall placement is preferred in mid-rise residential/office systems.</span>
                 </label>
-                <label>Perde kal&#305;nl&#305;&#287;&#305; min m
+                <label>Shear wall thickness min m
                   <input name="wall_thickness_min_m" type="number" min="0" step="0.05">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Genel durumda t<sub>w</sub> &ge; max(0.25 m, H/16) al&#305;n&#305;r. Yayg&#305;n: 0.25 m alt s&#305;n&#305;r.</span>
+                  <span class="field-note">Code/pre-screening: In general, t_w >= max(0.25 m, H/16) is used. Common lower bound: 0.25 m.</span>
                 </label>
-                <label>Perde kal&#305;nl&#305;&#287;&#305; max m
+                <label>Shear wall thickness max m
                   <input name="wall_thickness_max_m" type="number" min="0" step="0.05">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje bazl&#305;d&#305;r; a&#351;&#305;r&#305; kal&#305;nl&#305;k k&uuml;tle ve rijitlik da&#287;&#305;l&#305;m&#305;n&#305; etkiler. Yayg&#305;n: 0.25-0.30 m, daha y&uuml;ksek binalarda 0.35 m ve &uuml;zeri.</span>
+                  <span class="field-note">Code/pre-screening: The upper limit is project-specific; excessive thickness affects mass and stiffness distribution. Common range: 0.25-0.30 m, with 0.35 m and above for taller buildings.</span>
                 </label>
-                <label>Perde kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+                <label>Shear wall thickness step m
                   <input name="wall_thickness_step_m" type="number" min="0.05" step="0.05">
-                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.05 m.</span>
+                  <span class="field-note">This is not a code limit. Common parametric step: 0.05 m.</span>
                 </label>
-                <label>Perde uzunlu&#287;u min m
+                <label>Shear wall length min m
                   <input name="wall_length_min_m" type="number" min="0" step="0.1">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: l<sub>w</sub>/t<sub>w</sub> &ge; 6 ko&#351;ulunu sa&#287;lamal&#305;d&#305;r. 0.25 m kal&#305;nl&#305;k i&ccedil;in min yakla&#351;&#305;k 1.50 m. Yayg&#305;n: 1.5 m alt s&#305;n&#305;r.</span>
+                  <span class="field-note">Code/pre-screening: The l_w/t_w >= 6 condition must be satisfied. For 0.25 m thickness, the approximate minimum length is 1.50 m. Common lower bound: 1.5 m.</span>
                 </label>
-                <label>Perde uzunlu&#287;u max m
+                <label>Shear wall length max m
                   <input name="wall_length_max_m" type="number" min="0" step="0.1">
-                  <span class="field-note">Y&ouml;netmelik &uuml;st s&#305;n&#305;r&#305; do&#287;rudan bu parametreyle verilmez; plan, burulma ve mimari akslar belirleyicidir. Yayg&#305;n: 2.0-4.0 m.</span>
+                  <span class="field-note">The code does not prescribe this upper limit directly; plan layout, torsion, and architectural grids govern it. Common range: 2.0-4.0 m.</span>
                 </label>
-                <label>Perde uzunlu&#287;u ad&#305;m&#305; m
+                <label>Shear wall length step m
                   <input name="wall_length_step_m" type="number" min="0.1" step="0.1">
-                  <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.50 m.</span>
+                  <span class="field-note">This is not a code limit. Common parametric step: 0.50 m.</span>
                 </label>
-                <label>Perde donat&#305; alt s&#305;n&#305;r&#305;
+                <label>Shear wall reinforcement lower limit
                   <input name="wall_rho_min" type="number" min="0" step="0.0005">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Perde g&ouml;vde donat&#305;s&#305; i&ccedil;in minimum oran &ouml;n elemede 0.0025 al&#305;n&#305;r. Yayg&#305;n: 0.0025-0.0040.</span>
+                  <span class="field-note">Code/pre-screening: A minimum wall web reinforcement ratio of 0.0025 is used for preliminary filtering. Common range: 0.0025-0.0040.</span>
                 </label>
-                <label>Perde donat&#305; &uuml;st s&#305;n&#305;r&#305;
+                <label>Shear wall reinforcement upper limit
                   <input name="wall_rho_max" type="number" min="0" step="0.0005">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305;d&#305;r. Yayg&#305;n: 0.0040-0.0060; daha y&uuml;ksek oranlar s&#305;k donat&#305; ve detay zorlu&#287;u yaratabilir.</span>
+                  <span class="field-note">Code/pre-screening: This generator uses 0.0100 as the upper preliminary filter. Common range: 0.0040-0.0060; higher ratios may cause congestion and detailing difficulty.</span>
                 </label>
-                <label>Min perde kal&#305;nl&#305;&#287;&#305; m
+                <label>Min shear wall thickness m
                   <input name="min_wall_thickness_m" type="number" min="0" step="0.01">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.25 m ve H/16 kontrol&uuml; birlikte kullan&#305;l&#305;r. Yayg&#305;n: 0.25 m.</span>
+                  <span class="field-note">Code/pre-screening: The 0.25 m and H/16 checks are used together. Common value: 0.25 m.</span>
                 </label>
                 <label>Min l<sub>w</sub>/t<sub>w</sub>
                   <input name="min_wall_aspect_ratio" type="number" min="1" step="0.5">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Perde say&#305;lmas&#305; i&ccedil;in planda l<sub>w</sub>/t<sub>w</sub> &ge; 6. Yayg&#305;n: 6 ve &uuml;zeri; daha b&uuml;y&uuml;k oran daha belirgin perde davran&#305;&#351;&#305; verir.</span>
+                  <span class="field-note">Code/pre-screening: To be treated as a wall in plan, l_w/t_w >= 6. Common value: 6 or greater; larger ratios produce clearer wall behavior.</span>
                 </label>
-                <label>Perde yerle&#351;imi
+                <label>Shear wall placement
                   <input name="wall_placement" type="text">
-                  <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Rijitlik merkezi ile k&uuml;tle merkezi aras&#305;ndaki fark ve burulma etkileri izlenmelidir. Yayg&#305;n: D&#305;&#351; akslarda veya &ccedil;ekirdek etraf&#305;nda simetrik yerle&#351;im.</span>
+                  <span class="field-note">Code/pre-screening: The difference between stiffness center and mass center, and torsional effects, should be monitored. Common practice: symmetric placement on perimeter axes or around the core.</span>
                 </label>
               </div>
             </div>
@@ -216,93 +214,93 @@
           <div class="tab-panel" data-panel="materials">
             <div class="grid two">
               <fieldset>
-                <legend>Beton s&#305;n&#305;flar&#305;</legend>
+                <legend>Concrete classes</legend>
                 <div id="concreteClasses" class="chips"></div>
-                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: Deprem etkisindeki betonarme sistemlerde d&uuml;&#351;&uuml;k beton s&#305;n&#305;flar&#305;ndan ka&ccedil;&#305;n&#305;l&#305;r; bu veri setinde C25 alt&#305; kullan&#305;lmaz. Yayg&#305;n: T&uuml;rkiye'de yeni bina &ouml;n tasar&#305;m&#305;nda C25-C40 aral&#305;&#287;&#305;, s&#305;k olarak C30-C35.</p>
+                <p class="section-note">Code/pre-screening: Low concrete classes are avoided in RC systems under seismic action; this dataset does not use below C25. Common practice in Turkey: C25-C40 in preliminary design, often C30-C35.</p>
               </fieldset>
               <fieldset>
-                <legend>&Ccedil;elik s&#305;n&#305;flar&#305;</legend>
+                <legend>Steel classes</legend>
                 <div id="steelClasses" class="chips"></div>
-                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: T&uuml;rkiye Bina Deprem Y&ouml;netmeli&#287;i (TBDY) ve TS 500 yakla&#351;&#305;m&#305;na g&ouml;re sismik b&ouml;lgelerdeki betonarme ta&#351;&#305;y&#305;c&#305; sistemlerde minimum kabul S420/B420C nerv&uuml;rl&uuml; donat&#305; &ccedil;eli&#287;i olarak al&#305;n&#305;r; bu &ccedil;al&#305;&#351;mada S420 yerine B420C kullan&#305;l&#305;r. Yayg&#305;n: T&uuml;rkiye'de yeni bina projelerinde B420C ve B500C kullan&#305;l&#305;r; fy otomatik olarak 420 veya 500 MPa al&#305;n&#305;r.</p>
+                <p class="section-note">Code/pre-screening: Following TBDY and TS 500 practice, the minimum accepted reinforcement steel for seismic RC structural systems is taken as ribbed S420/B420C; this study uses B420C instead of S420. Common practice in Turkey: B420C and B500C; fy is automatically taken as 420 or 500 MPa.</p>
               </fieldset>
             </div>
           </div>
 
           <div class="tab-panel" data-panel="rebar">
-            <p class="section-note">Bu sekmedeki de&#287;erler model &uuml;retilirken rastgele se&ccedil;ilecek aday donat&#305; oranlar&#305;d&#305;r. Kabul/eleme alt-&uuml;st s&#305;n&#305;rlar&#305; Kontrol sekmesinde tan&#305;mlan&#305;r.</p>
+            <p class="section-note">Values in this tab are candidate reinforcement ratios randomly selected during model generation. Acceptance/rejection lower and upper limits are defined in the Checks tab.</p>
             <div class="ratio-groups">
               <fieldset>
-                <legend>Kolon donat&#305; aday oranlar&#305;</legend>
+                <legend>Column reinforcement candidate ratios</legend>
                 <div id="columnRebarRatios" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Her model i&ccedil;in bu listeden bir kolon boyuna donat&#305; oran&#305; se&ccedil;ilir. Yayg&#305;n &ouml;n tasar&#305;m adaylar&#305; 0.010-0.030 aral&#305;&#287;&#305;ndad&#305;r; se&ccedil;ilen de&#287;er Kontrol sekmesindeki alt-&uuml;st s&#305;n&#305;rdan ge&ccedil;emezse model elenir.</p>
+                <p class="section-note">Candidate pool: For each model, one longitudinal column reinforcement ratio is selected from this list. Common preliminary design candidates are in the 0.010-0.030 range; if the selected value fails the lower/upper limits in Checks, the candidate is rejected.</p>
               </fieldset>
               <fieldset>
-                <legend>Kiri&#351; mesnet &uuml;st aday oranlar&#305;</legend>
+                <legend>Beam support top candidate ratios</legend>
                 <div id="beamTopRatioSupports" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Kiri&#351; u&ccedil;/mesnet b&ouml;lgesi &uuml;st donat&#305;s&#305; i&ccedil;in bu listeden se&ccedil;im yap&#305;l&#305;r. Yayg&#305;n parametrik adaylar 0.005-0.020 aral&#305;&#287;&#305;ndad&#305;r.</p>
+                <p class="section-note">Candidate pool: One value is selected from this list for beam top reinforcement at support/end regions. Common parametric candidates are 0.005-0.020.</p>
               </fieldset>
               <fieldset>
-                <legend>Kiri&#351; a&ccedil;&#305;kl&#305;k alt aday oranlar&#305;</legend>
+                <legend>Beam span bottom candidate ratios</legend>
                 <div id="beamBottomRatioSpans" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Kiri&#351; a&ccedil;&#305;kl&#305;k b&ouml;lgesi alt donat&#305;s&#305; i&ccedil;in bu listeden se&ccedil;im yap&#305;l&#305;r. Yayg&#305;n adaylar 0.005-0.016 aral&#305;&#287;&#305;ndad&#305;r.</p>
+                <p class="section-note">Candidate pool: One value is selected from this list for beam bottom reinforcement in span regions. Common candidates are 0.005-0.016.</p>
               </fieldset>
               <fieldset>
-                <legend>Perde donat&#305; aday oranlar&#305;</legend>
+                <legend>Shear wall reinforcement candidate ratios</legend>
                 <div id="wallRebarRatios" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Perde eklenirse g&ouml;vde donat&#305;s&#305; i&ccedil;in bu listeden oran se&ccedil;ilir. Yayg&#305;n parametrik adaylar 0.0025-0.0060 aral&#305;&#287;&#305;ndad&#305;r; kabul s&#305;n&#305;rlar&#305; Temel/Zemin sekmesindeki perde ayarlar&#305;nda tutulur.</p>
+                <p class="section-note">Candidate pool: If shear walls are enabled, one wall web reinforcement ratio is selected from this list. Common parametric candidates are 0.0025-0.0060; acceptance limits are kept in the Foundation/Soil wall settings.</p>
               </fieldset>
               <fieldset>
-                <legend>D&ouml;&#351;eme donat&#305; aday oranlar&#305;</legend>
+                <legend>Slab reinforcement candidate ratios</legend>
                 <div id="slabRebarRatios" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Se&ccedil;ilen oran d&ouml;&#351;emenin iki asal do&#287;rultusu i&ccedil;in ayn&#305; &ouml;n kabul olarak kullan&#305;l&#305;r. Y&ouml;netmelik/&ouml;n eleme: TS 500'de S420/S500 i&ccedil;in tek y&ouml;nl&uuml; plak asal donat&#305; oran&#305; en az 0.0020; iki y&ouml;nl&uuml; plakta her bir do&#287;rultuda en az 0.0015 ve toplamda en az 0.0035'tir. Bu jenerat&ouml;r muhafazak&acirc;r olarak her iki do&#287;rultuda en az 0.0020 ister. Yayg&#305;n adaylar: 0.0020-0.0040.</p>
+                <p class="section-note">Candidate pool: The selected ratio is used as the same preliminary assumption for both principal slab directions. Code/pre-screening: In TS 500, for S420/S500, one-way slab principal reinforcement ratio is at least 0.0020; in two-way slabs, at least 0.0015 in each direction and at least 0.0035 total. This generator conservatively requires at least 0.0020 in both directions. Common candidates: 0.0020-0.0040.</p>
               </fieldset>
               <fieldset>
-                <legend>Radye temel donat&#305; aday oranlar&#305;</legend>
+                <legend>Raft foundation reinforcement candidate ratios</legend>
                 <div id="raftRebarRatios" class="ratio-list"></div>
-                <p class="section-note">Aday havuzu: Radye temel shell alan&#305; i&ccedil;in temsili toplam donat&#305; oran&#305;d&#305;r. Y&ouml;netmelik/&ouml;n eleme: Radye donat&#305;s&#305; nihai olarak e&#287;ilme, kesme, z&#305;mbalama, zemin bas&#305;nc&#305; ve oturma kontrolleriyle tasarlanmal&#305;d&#305;r; bu jenerat&ouml;r TS 500 plak/temel davran&#305;&#351;&#305; i&ccedil;in 0.0020 alt &ouml;n eleme seviyesini kullan&#305;r. Yayg&#305;n adaylar: 0.0020-0.0050.</p>
+                <p class="section-note">Candidate pool: Representative total reinforcement ratio for the raft foundation shell area. Code/pre-screening: Final raft reinforcement must be designed using flexure, shear, punching, soil pressure, and settlement checks; this generator uses 0.0020 as a TS 500 slab/foundation preliminary lower level. Common candidates: 0.0020-0.0050.</p>
               </fieldset>
             </div>
           </div>
 
           <div class="tab-panel" data-panel="foundation">
             <div class="grid three">
-              <label class="check"><input name="enable_raft_foundation" type="checkbox">Radye temel modelle
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Radye boyutland&#305;rma zemin emniyeti, oturma, z&#305;mbalama, e&#287;ilme ve kesme kontrolleriyle yap&#305;lmal&#305;d&#305;r. Bu panelde radye, sentetik model i&ccedil;in kabuk eleman &ouml;n kabul&uuml;d&uuml;r. Yayg&#305;n: Perde/kolonlu orta katl&#305; yap&#305;larda radye temel s&#305;k tercih edilir.</span>
+              <label class="check"><input name="enable_raft_foundation" type="checkbox">Model raft foundation
+                <span class="field-note">Code/pre-screening: Raft sizing should be checked for soil bearing, settlement, punching, flexure, and shear. In this panel, the raft is a shell-element preliminary assumption for synthetic models. Common practice: raft foundations are frequently used in mid-rise wall/column buildings.</span>
               </label>
-              <label class="check"><input name="assign_soil_vertical_springs" type="checkbox">D&uuml;&#351;ey zemin yay&#305; ata
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TBDY yatak katsay&#305;s&#305;n&#305; do&#287;rudan vermez; de&#287;erler zemin et&uuml;d&uuml;nden al&#305;nmal&#305;d&#305;r. Burada Winkler yay&#305; i&ccedil;in parametrik kabul kullan&#305;l&#305;r.</span>
+              <label class="check"><input name="assign_soil_vertical_springs" type="checkbox">Assign vertical soil springs
+                <span class="field-note">Code/pre-screening: TBDY does not provide subgrade modulus directly; values should come from the geotechnical report. Here, a parametric value is used for Winkler springs.</span>
               </label>
               <fieldset>
-                <legend>TBDY zemin s&#305;n&#305;flar&#305;</legend>
+                <legend>TBDY soil classes</legend>
                 <div id="soilClasses" class="chips"></div>
-                <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY zemin etkisini ZA-ZE s&#305;n&#305;flar&#305; ile dikkate al&#305;r; bu modelde s&#305;n&#305;f yatak katsay&#305;s&#305;na ba&#287;lan&#305;r. Yayg&#305;n: ZC-ZD orta/yumu&#351;ak zemin senaryolar&#305; veri &ccedil;e&#351;itlili&#287;i i&ccedil;in s&#305;k kullan&#305;l&#305;r.</p>
+                <p class="section-note">Code/pre-screening: TBDY represents soil effects using ZA-ZE classes; in this model, soil class is linked to subgrade modulus. Common use: ZC-ZD medium/soft soil scenarios are often used for dataset diversity.</p>
               </fieldset>
-              <label>Radye kal&#305;nl&#305;&#287;&#305; min m
+              <label>Raft thickness min m
                 <input name="raft_thickness_min_m" type="number" min="0" step="0.05">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Nihai s&#305;n&#305;r z&#305;mbalama, kesme, e&#287;ilme ve oturma hesab&#305;yla belirlenir. Bu jenerat&ouml;rde 0.40 m alt&#305; elenir. Yayg&#305;n: Orta katl&#305; binalarda 0.50 m ba&#351;lang&#305;&ccedil; aday&#305;.</span>
+                <span class="field-note">Code/pre-screening: The final limit is governed by punching, shear, flexure, and settlement calculations. This generator rejects values below 0.40 m. Common preliminary value for mid-rise buildings: 0.50 m.</span>
               </label>
-              <label>Radye kal&#305;nl&#305;&#287;&#305; max m
+              <label>Raft thickness max m
                 <input name="raft_thickness_max_m" type="number" min="0" step="0.05">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: &Uuml;st s&#305;n&#305;r proje y&uuml;kleri ve zeminle belirlenir; gereksiz kal&#305;nl&#305;k k&uuml;tle ve maliyeti art&#305;r&#305;r. Yayg&#305;n: 0.60-1.00 m aral&#305;&#287;&#305;.</span>
+                <span class="field-note">Code/pre-screening: The upper limit depends on project loads and soil; unnecessary thickness increases mass and cost. Common range: 0.60-1.00 m.</span>
               </label>
-              <label>Radye kal&#305;nl&#305;&#287;&#305; ad&#305;m&#305; m
+              <label>Raft thickness step m
                 <input name="raft_thickness_step_m" type="number" min="0.05" step="0.05">
-                <span class="field-note">Y&ouml;netmelik s&#305;n&#305;r&#305; de&#287;ildir. Yayg&#305;n parametrik ad&#305;m: 0.10 m.</span>
+                <span class="field-note">This is not a code limit. Common parametric step: 0.10 m.</span>
               </label>
-              <label>Min radye kal&#305;nl&#305;&#287;&#305; m
+              <label>Min raft thickness m
                 <input name="min_raft_thickness_m" type="number" min="0" step="0.05">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Modelde kabul edilecek mutlak alt s&#305;n&#305;rd&#305;r; nihai tasar&#305;m yerine ge&ccedil;mez. Yayg&#305;n: 0.40-0.50 m alt kontrol seviyesi.</span>
+                <span class="field-note">Code/pre-screening: Absolute lower limit accepted by the model; it does not replace final design. Common lower check level: 0.40-0.50 m.</span>
               </label>
-              <label>Radye kenar ta&#351;mas&#305; m
+              <label>Raft edge offset m
                 <input name="foundation_edge_offset_m" type="number" min="0" step="0.1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kenar ta&#351;mas&#305; kolon/perde y&uuml;klerinin zemine yay&#305;lmas&#305;, z&#305;mbalama ve kal&#305;p uygulamas&#305; i&ccedil;in kontrol edilir. Yayg&#305;n: 0.50 m civar&#305;.</span>
+                <span class="field-note">Code/pre-screening: Edge projection is checked for spreading column/wall loads to soil, punching, and formwork practice. Common value: around 0.50 m.</span>
               </label>
             </div>
             <div class="section-table-wrap">
               <div class="section-head">
                 <div>
-                  <h2>Zemin yatak katsay&#305;lar&#305; kN/m3</h2>
-                  <p class="section-note">Y&ouml;netmelik/&ouml;n eleme: TBDY zemin s&#305;n&#305;f&#305; do&#287;rudan yatak katsay&#305;s&#305; vermez; kesin ks de&#287;eri geoteknik rapora g&ouml;re al&#305;nmal&#305;d&#305;r. Buradaki de&#287;erler Winkler yay&#305; i&ccedil;in sentetik/parametrik kabuld&uuml;r. Yayg&#305;n: ZA-ZB sert zeminde y&uuml;ksek, ZD-ZE yumu&#351;ak zeminde d&uuml;&#351;&uuml;k ks kullan&#305;l&#305;r.</p>
+                  <h2>Soil subgrade moduli kN/m3</h2>
+                  <p class="section-note">Code/pre-screening: TBDY soil class does not directly provide subgrade modulus; exact k_s should come from a geotechnical report. The values here are synthetic/parametric assumptions for Winkler springs. Common practice: higher k_s for ZA-ZB stiff soils and lower k_s for ZD-ZE soft soils.</p>
                 </div>
               </div>
               <div id="soilModulusTable" class="soil-table"></div>
@@ -310,67 +308,67 @@
           </div>
 
           <div class="tab-panel" data-panel="checks">
-            <p class="section-note">Bu sekmedeki de&#287;erler aday modelin analiz &ouml;ncesi ge&ccedil;ece&#287;i kabul/eleme s&#305;n&#305;rlar&#305;d&#305;r. Donat&#305; sekmesindeki adaylardan se&ccedil;ilen oranlar bu s&#305;n&#305;rlar&#305;n d&#305;&#351;&#305;nda kal&#305;rsa aday yeniden &uuml;retilir.</p>
+            <p class="section-note">Values in this tab are acceptance/rejection limits applied before analysis. If ratios selected from the Reinforcement tab fall outside these limits, the candidate is regenerated.</p>
             <div class="grid three">
-              <label>Kolon donat&#305; alt s&#305;n&#305;r&#305;
+              <label>Column reinforcement lower limit
                 <input name="rho_col_min" type="number" min="0" step="0.001">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kolon boyuna donat&#305; oran&#305; i&ccedil;in alt s&#305;n&#305;r 0.01 al&#305;n&#305;r. Yayg&#305;n: 0.01-0.02 ba&#351;lang&#305;&ccedil; aral&#305;&#287;&#305;.</span>
+                <span class="field-note">Code/pre-screening: The lower limit for column longitudinal reinforcement ratio is taken as 0.01. Common starting range: 0.01-0.02.</span>
               </label>
-              <label>Kolon donat&#305; &uuml;st s&#305;n&#305;r&#305;
+              <label>Column reinforcement upper limit
                 <input name="rho_col_max" type="number" min="0" step="0.001">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu sistemde kolon i&ccedil;in 0.04 &uuml;st s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.03 &uuml;zeri s&#305;k&#305;&#351;&#305;k donat&#305; riski nedeniyle dikkat ister.</span>
+                <span class="field-note">Code/pre-screening: This system uses 0.04 as the upper column reinforcement limit. Common practice: values above 0.03 require attention due to congestion risk.</span>
               </label>
-              <label>Kiri&#351; donat&#305; alt s&#305;n&#305;r&#305;
+              <label>Beam reinforcement lower limit
                 <input name="rho_beam_min" type="number" min="0" step="0.001">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Minimum &ccedil;ekme donat&#305;s&#305;n&#305; temsil eden 0.003 alt s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.005 ve &uuml;zeri adaylar.</span>
+                <span class="field-note">Code/pre-screening: A 0.003 lower limit is used to represent minimum tensile reinforcement. Common candidates are 0.005 and above.</span>
               </label>
-              <label>Kiri&#351; donat&#305; &uuml;st s&#305;n&#305;r&#305;
+              <label>Beam reinforcement upper limit
                 <input name="rho_beam_max" type="number" min="0" step="0.001">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351; donat&#305;s&#305; i&ccedil;in 0.025 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.016-0.020 &uuml;st donat&#305; yo&#287;un aral&#305;kt&#305;r.</span>
+                <span class="field-note">Code/pre-screening: A 0.025 upper preliminary filter is used for beam reinforcement. Common dense upper range: 0.016-0.020.</span>
               </label>
               <label>Min kolon boyutu m
                 <input name="min_column_dimension_m" type="number" min="0" step="0.01">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.30 m alt&#305; kolon kabul edilmez. Yayg&#305;n: 0.40-0.70 m.</span>
+                <span class="field-note">Code/pre-screening: Columns below 0.30 m are not accepted. Common range: 0.40-0.70 m.</span>
               </label>
-              <label>Min kiri&#351; geni&#351;li&#287;i m
+              <label>Min beam width m
                 <input name="min_beam_width_m" type="number" min="0" step="0.01">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.25 m alt&#305; elenir. Yayg&#305;n: 0.25-0.35 m.</span>
+                <span class="field-note">Code/pre-screening: Values below 0.25 m are rejected. Common range: 0.25-0.35 m.</span>
               </label>
-              <label>Min kiri&#351; y&uuml;ksekli&#287;i m
+              <label>Min beam depth m
                 <input name="min_beam_depth_m" type="number" min="0" step="0.01">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: 0.50 m alt&#305; elenir. Yayg&#305;n: 0.50-0.70 m.</span>
+                <span class="field-note">Code/pre-screening: Values below 0.50 m are rejected. Common range: 0.50-0.70 m.</span>
               </label>
               <label>Maks L/h
                 <input name="max_span_to_beam_depth_ratio" type="number" min="1" step="0.5">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Sehim/rijitlik i&ccedil;in L/h kontrol&uuml; &ouml;n eleme olarak kullan&#305;l&#305;r. Yayg&#305;n: 12-15 aral&#305;&#287;&#305;.</span>
+                <span class="field-note">Code/pre-screening: L/h is used as a preliminary stiffness/deflection check. Common range: 12-15.</span>
               </label>
-              <label>G&uuml;&ccedil;l&uuml; kolon katsay&#305;s&#305;
+              <label>Strong-column factor
                 <input name="strong_column_factor" type="number" min="1" step="0.05">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: G&uuml;&ccedil;l&uuml; kolon-zay&#305;f kiri&#351; i&ccedil;in kapasite oran&#305; 1.20 al&#305;n&#305;r. Yayg&#305;n: 1.2 muhafazakar &ouml;n kontrol.</span>
+                <span class="field-note">Code/pre-screening: A capacity ratio of 1.20 is used for the strong-column weak-beam pre-check. Common conservative value: 1.2.</span>
               </label>
-              <label>Min d&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; m
+              <label>Min slab thickness m
                 <input name="min_slab_thickness_m" type="number" min="0.08" step="0.01">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: TS 500 a&ccedil;&#305;kl&#305;k/kal&#305;nl&#305;k ko&#351;uluna ek mutlak &ouml;n eleme alt s&#305;n&#305;r&#305;d&#305;r. Yayg&#305;n kiri&#351;li plak ba&#351;lang&#305;c&#305;: 0.12-0.15 m.</span>
+                <span class="field-note">Code/pre-screening: Absolute preliminary lower limit in addition to TS 500 span/thickness requirements. Common beam-supported slab starting range: 0.12-0.15 m.</span>
               </label>
-              <label>Maks d&ouml;&#351;eme L<sub>k&#305;sa</sub>/h
+              <label>Max slab L<sub>short</sub>/h
                 <input name="max_slab_continuous_span_to_thickness_ratio" type="number" min="1" step="1">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Kiri&#351;li s&uuml;rekli plaklar i&ccedil;in TS 500 tabanl&#305; sehim &ouml;n kontrol&uuml; olarak L/h &lt;= 30 kullan&#305;l&#305;r. Nihai sehim hesab&#305;n&#305;n yerini tutmaz.</span>
+                <span class="field-note">Code/pre-screening: For continuous beam-supported slabs, L/h <= 30 is used as a TS 500-based preliminary deflection check. It does not replace final deflection calculations.</span>
               </label>
-              <label>D&ouml;&#351;eme donat&#305; alt s&#305;n&#305;r&#305;
+              <label>Slab reinforcement lower limit
                 <input name="slab_rho_min" type="number" min="0" step="0.0005">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Muhafazak&acirc;r alt s&#305;n&#305;r her iki do&#287;rultuda 0.0020. Bu de&#287;er tek y&ouml;nl&uuml; S420/S500 plak asal donat&#305;s&#305;n&#305; ve iki y&ouml;nl&uuml; plak minimumlar&#305;n&#305; kapsar.</span>
+                <span class="field-note">Code/pre-screening: A conservative lower bound of 0.0020 is used in both directions. This covers one-way S420/S500 slab principal reinforcement and two-way slab minimums.</span>
               </label>
-              <label>D&ouml;&#351;eme donat&#305; &uuml;st s&#305;n&#305;r&#305;
+              <label>Slab reinforcement upper limit
                 <input name="slab_rho_max" type="number" min="0" step="0.0005">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st filtre s&#305;n&#305;r&#305;d&#305;r; nihai donat&#305; hesab&#305; de&#287;ildir. Yayg&#305;n: 0.0020-0.0040.</span>
+                <span class="field-note">Code/pre-screening: This generator uses 0.0100 as an upper filter; it is not final reinforcement design. Common range: 0.0020-0.0040.</span>
               </label>
-              <label>Radye donat&#305; alt s&#305;n&#305;r&#305;
+              <label>Raft reinforcement lower limit
                 <input name="raft_rho_min" type="number" min="0" step="0.0005">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Radye temel i&ccedil;in nihai minimum donat&#305; e&#287;ilme, kesme ve z&#305;mbalama hesab&#305;yla belirlenir. Bu parametrik &ouml;n elemede plak/temel davran&#305;&#351;&#305; i&ccedil;in 0.0020 alt s&#305;n&#305;r&#305; kullan&#305;l&#305;r. Yayg&#305;n: 0.0020-0.0035 ba&#351;lang&#305;&ccedil; aral&#305;&#287;&#305;.</span>
+                <span class="field-note">Code/pre-screening: Final minimum raft reinforcement is governed by flexure, shear, and punching calculations. This parametric pre-check uses 0.0020 as a slab/foundation lower limit. Common starting range: 0.0020-0.0035.</span>
               </label>
-              <label>Radye donat&#305; &uuml;st s&#305;n&#305;r&#305;
+              <label>Raft reinforcement upper limit
                 <input name="raft_rho_max" type="number" min="0" step="0.0005">
-                <span class="field-note">Y&ouml;netmelik/&ouml;n eleme: Bu jenerat&ouml;rde 0.0100 &uuml;st &ouml;n eleme s&#305;n&#305;r&#305;d&#305;r; daha y&uuml;ksek oranlar donat&#305; s&#305;k&#305;&#351;&#305;kl&#305;&#287;&#305; ve uygulanabilirlik a&ccedil;&#305;s&#305;ndan ayr&#305; kontrol ister. Yayg&#305;n: 0.0030-0.0060.</span>
+                <span class="field-note">Code/pre-screening: This generator uses 0.0100 as an upper preliminary filter; higher ratios require separate checks for congestion and constructability. Common range: 0.0030-0.0060.</span>
               </label>
               <label>Dead load kN/m<input name="dead_load_kn_m" type="number" step="0.1"></label>
               <label>Live load kN/m<input name="live_load_kn_m" type="number" step="0.1"></label>
@@ -379,57 +377,57 @@
 
           <div class="tab-panel" data-panel="pushover">
             <div class="grid three">
-              <label class="check"><input name="enable_pushover_cases" type="checkbox">Pushover case tan&#305;mla
-                <span class="field-note">A&ccedil;&#305;ksa SAP2000 i&ccedil;inde PUSHOVER_X/PUSHOVER_Y nonlinear static case'leri olu&#351;turulur. Bu tek ba&#351;&#305;na &ccedil;&ouml;z&uuml;m ba&#351;latmaz.</span>
+              <label class="check"><input name="enable_pushover_cases" type="checkbox">Define pushover cases
+                <span class="field-note">If enabled, nonlinear static cases PUSHOVER_X/PUSHOVER_Y are created in SAP2000. This alone does not start the solution.</span>
               </label>
-              <label class="check"><input name="run_analysis_after_save" type="checkbox">Analizi &ccedil;al&#305;&#351;t&#305;r
-                <span class="field-note">A&ccedil;&#305;ksa model kaydedildikten sonra run flag'leri MODAL ve se&ccedil;ili pushover case'lere verilir, ard&#305;ndan SAP2000 Analyze.RunAnalysis() &ccedil;a&#287;r&#305;l&#305;r.</span>
+              <label class="check"><input name="run_analysis_after_save" type="checkbox">Run analysis
+                <span class="field-note">If enabled, after the model is saved, run flags are assigned to MODAL and selected pushover cases, then SAP2000 Analyze.RunAnalysis() is called.</span>
               </label>
               <fieldset>
-                <legend>Yönler</legend>
+                <legend>Directions</legend>
                 <div id="pushoverDirections" class="chips"></div>
               </fieldset>
               <label class="check"><input name="fix_pushover_target_drift_ratio" type="checkbox">Hedef drift sabit
-                <span class="field-note">A&ccedil;&#305;ksa t&uuml;m modellerde tek hedef drift kullan&#305;l&#305;r ve hedef drift optimizasyon/de&#287;i&#351;ken havuzuna dahil edilmez.</span>
+                <span class="field-note">If enabled, all models use one fixed target drift and target drift is excluded from the optimization/variable pool.</span>
               </label>
               <label>Sabit hedef drift<input name="pushover_target_drift_ratio_fixed" type="number" min="0" step="0.001">
-                <span class="field-note">Hedef drift sabit a&ccedil;&#305;kken kullan&#305;l&#305;r. &Ouml;rnek: 0.04 toplam bina y&uuml;ksekli&#287;inin %4'&uuml; kadar tepe deplasman hedefidir.</span>
+                <span class="field-note">Used when fixed target drift is enabled. Example: 0.04 means a roof displacement target equal to 4% of total building height.</span>
               </label>
               <label>Hedef drift min<input name="pushover_target_drift_ratio_min" type="number" min="0" step="0.001">
-                <span class="field-note">Hedef drift sabit kapal&#305;yken rastgele se&ccedil;im alt s&#305;n&#305;r&#305;d&#305;r.</span>
+                <span class="field-note">Lower bound for random selection when fixed target drift is disabled.</span>
               </label>
               <label>Hedef drift max<input name="pushover_target_drift_ratio_max" type="number" min="0" step="0.001">
-                <span class="field-note">Hedef drift sabit kapal&#305;yken rastgele se&ccedil;im &uuml;st s&#305;n&#305;r&#305;d&#305;r.</span>
+                <span class="field-note">Upper bound for random selection when fixed target drift is disabled.</span>
               </label>
-              <label>Hedef drift adımı<input name="pushover_target_drift_ratio_step" type="number" min="0.001" step="0.001">
-                <span class="field-note">Hedef drift sabit kapal&#305;yken min-max aral&#305;&#287;&#305;nda kullan&#305;lacak art&#305;md&#305;r.</span>
+              <label>Target drift step<input name="pushover_target_drift_ratio_step" type="number" min="0.001" step="0.001">
+                <span class="field-note">Step used within the min-max range when fixed target drift is disabled.</span>
               </label>
               <label>Taban kesme proxy kN<input name="pushover_base_shear_proxy_kn" type="number" min="0" step="10"></label>
-              <label>Yük dağılımı<input name="pushover_load_distribution" type="text"></label>
+              <label>Load distribution<input name="pushover_load_distribution" type="text"></label>
               <label class="check"><input name="enable_plastic_hinges" type="checkbox">Plastik mafsal ata
-                <span class="field-note">Ger&ccedil;ek pushover i&ccedil;in zorunludur. Mafsal atanmadan &ccedil;al&#305;&#351;an nonlinear static case, kapasite e&#287;risi ve IO/LS/CP performans yorumu i&ccedil;in yeterli kabul edilmez.</span>
+                <span class="field-note">Required for real pushover interpretation. A nonlinear static case without hinge assignment is not sufficient for capacity curves or IO/LS/CP performance evaluation.</span>
               </label>
-              <label class="check"><input name="require_plastic_hinge_assignment" type="checkbox">Mafsal atanamazsa modeli ele
-                <span class="field-note">A&ccedil;&#305;k kalmal&#305;d&#305;r. Bu kurulumdaki SAP2000 v22 OAPI do&#287;rudan SetHingeAssign metodunu sunmad&#305;&#287;&#305; i&ccedil;in mafsallar .$2k text model tablolar&#305;na yaz&#305;l&#305;p SAP2000'e tekrar okutularak atan&#305;r; do&#287;rulanamazsa model elenir.</span>
+              <label class="check"><input name="require_plastic_hinge_assignment" type="checkbox">Reject model if hinges cannot be assigned
+                <span class="field-note">Should remain enabled. SAP2000 v22 OAPI in this setup does not expose SetHingeAssign directly, so hinges are written into .$2k text model tables and re-imported into SAP2000; if this cannot be verified, the model is rejected.</span>
               </label>
-              <label class="check"><input name="assign_column_pmm_hinges" type="checkbox">Kolon M2/M3 mafsalı
-                <span class="field-note">SAP2000 v22 text importta `Default-PMM` auto-hinge farkl&#305; tablo ister. Bu a&#351;amada import hatas&#305; olmamas&#305; i&ccedil;in kolon u&ccedil;lar&#305;na a&ccedil;&#305;k tan&#305;ml&#305; M2 ve M3 mafsallar&#305; atan&#305;r.</span>
+              <label class="check"><input name="assign_column_pmm_hinges" type="checkbox">Column M2/M3 hinge
+                <span class="field-note">In SAP2000 v22 text import, the `Default-PMM` auto-hinge requires a different table format. At this stage, explicit M2 and M3 hinges are assigned at column ends to avoid import errors.</span>
               </label>
-              <label class="check"><input name="assign_beam_m3_hinges" type="checkbox">Kiriş M3 mafsalı
-                <span class="field-note">Kiri&#351; u&ccedil;lar&#305;na a&ccedil;&#305;k tan&#305;ml&#305; M3 moment mafsal&#305; atan&#305;r.</span>
+              <label class="check"><input name="assign_beam_m3_hinges" type="checkbox">Beam M3 hinge
+                <span class="field-note">Explicit M3 moment hinges are assigned at beam ends.</span>
               </label>
-              <label class="check"><input name="assign_shear_hinges" type="checkbox">V2/V3 kesme mafsalı</label>
+              <label class="check"><input name="assign_shear_hinges" type="checkbox">V2/V3 shear hinge</label>
               <label class="check"><input name="enable_exact_hinge_ui_export" type="checkbox">Deneysel SAP hinge exportu
-                  <span class="field-note">Varsay&#305;lan kapal&#305;d&#305;r. Ana &uuml;retim proxy hinge sonu&ccedil;lar&#305;n&#305; kullan&#305;r. Bu se&ccedil;enek yaln&#305;zca az say&#305;da validasyon modeli i&ccedil;in SAP2000 Frame Hinge States tablosunu almaya &ccedil;al&#305;&#351;&#305;r; SAP tablo aray&uuml;z&uuml; yava&#351; ve k&#305;r&#305;lgan olabilir.</span>
+                  <span class="field-note">Disabled by default. Main generation uses proxy hinge results. This option only attempts to collect the SAP2000 Frame Hinge States table for a small number of validation models; SAP table automation may be slow and fragile.</span>
               </label>
-              <label>Her y&ouml;n i&ccedil;in min hinge sat&#305;r&#305;<input name="exact_hinge_export_min_rows_per_direction" type="number" min="1" step="1">
-                <span class="field-note">Sadece deneysel SAP hinge exportu a&ccedil;&#305;ksa kullan&#305;l&#305;r. Ana proxy &uuml;retimini etkilemez.</span>
+              <label>Min hinge rows per direction<input name="exact_hinge_export_min_rows_per_direction" type="number" min="1" step="1">
+                <span class="field-note">Used only when experimental SAP hinge export is enabled. It does not affect the main proxy generation.</span>
               </label>
-              <label>Kolon mafsal property<input name="column_hinge_property" type="text">
-                <span class="field-note">Bilgi alan&#305;d&#305;r; text importta ger&ccedil;ekte `GEN_COL_M2` ve `GEN_COL_M3` yaz&#305;l&#305;r. Auto PMM tablo format&#305; ayr&#305;ca eklenecek.</span>
+              <label>Column hinge property<input name="column_hinge_property" type="text">
+                <span class="field-note">Informational field; in text import, `GEN_COL_M2` and `GEN_COL_M3` are actually written. Auto PMM table format can be added later.</span>
               </label>
-              <label>Kiriş mafsal property<input name="beam_hinge_property" type="text">
-                <span class="field-note">Bilgi alan&#305;d&#305;r; text importta ger&ccedil;ekte `GEN_BEAM_M3` yaz&#305;l&#305;r.</span>
+              <label>Beam hinge property<input name="beam_hinge_property" type="text">
+                <span class="field-note">Informational field; in text import, `GEN_BEAM_M3` is actually written.</span>
               </label>
               <label>V2 mafsal property<input name="shear_hinge_v2_property" type="text"></label>
               <label>V3 mafsal property<input name="shear_hinge_v3_property" type="text"></label>
@@ -440,8 +438,8 @@
             <section class="results-panel">
               <div class="section-head">
                 <div>
-                  <h2>Pushover Sonu&ccedil;lar&#305;</h2>
-                  <p class="section-note">Analiz sonras&#305; kapasite e&#287;rileri, taban kesmesi-&ccedil;at&#305; deplasman&#305; bilgileri ve plastik mafsal &ouml;zetleri burada listelenir.</p>
+                  <h2>Pushover Results</h2>
+                  <p class="section-note">After analysis, capacity curves, base shear-roof displacement values, and plastic hinge summaries are listed here.</p>
                 </div>
                 <button id="refreshResultsBtn" type="button">Yenile</button>
               </div>
@@ -453,8 +451,8 @@
             <section class="results-panel">
               <div class="section-head">
                 <div>
-                  <h2>Grafikler</h2>
-                  <p class="section-note">Se&ccedil;ilen model parametresini pushover/proxy mafsal sonucu ile kar&#351;&#305;la&#351;t&#305;r&#305;r. Grafikler dashboarddaki mevcut model sonu&ccedil;lar&#305;ndan &uuml;retilir.</p>
+                  <h2>Charts</h2>
+                  <p class="section-note">Compares the selected model parameter with pushover/proxy hinge results. Charts are generated from the model results currently available in the dashboard.</p>
                 </div>
                 <button id="refreshChartsBtn" type="button">Yenile</button>
               </div>
@@ -462,7 +460,7 @@
                 <label>Grafik tipi
                   <select id="chartType">
                     <option value="scatter">Scatter</option>
-                    <option value="bar">Grup ortalamas&#305;</option>
+                    <option value="bar">Group average</option>
                     <option value="heatmap">Heatmap</option>
                   </select>
                 </label>
@@ -477,7 +475,7 @@
                 </label>
                 <label class="checkbox-row">
                   <input id="chartHideMissing" type="checkbox" checked>
-                  <span>Veri yok olanları gizle</span>
+                  <span>Hide missing values</span>
                 </label>
               </div>
               <div id="chartSummary" class="metric-grid chart-summary"></div>
@@ -485,222 +483,133 @@
             </section>
           </div>
 
-          <div class="tab-panel" data-panel="som">
-            <section class="results-panel">
-              <div class="section-head">
-                <div>
-                  <h2>SOM Analizi</h2>
-                  <p class="section-note">Self Organizing Map, modelleri yaln&#305;zca X parametre benzerli&#287;ine g&ouml;re 2B haritaya yerle&#351;tirir. Se&ccedil;ilen Y sonucu harita h&uuml;crelerini yorumlamak i&ccedil;in renklendirilir.</p>
-                </div>
-                <div class="inline-actions">
-                  <button id="optimizeSomBtn" type="button">Boyutu Optimize Et</button>
-                  <button id="selectSomRepresentativeBtn" type="button">Temsilci Seç</button>
-                  <button id="trainSomBtn" type="button">SOM E&#287;it</button>
-                  <button id="refreshSomBtn" type="button">Yenile</button>
-                </div>
-              </div>
-              <div class="grid five chart-controls">
-                <label>Geni&#351;lik
-                  <input id="somWidth" type="number" value="4" min="2" max="20" step="1">
-                </label>
-                <label>Y&uuml;kseklik
-                  <input id="somHeight" type="number" value="4" min="2" max="20" step="1">
-                </label>
-                <label>Iterasyon
-                  <input id="somIterations" type="number" value="800" min="50" step="50">
-                </label>
-                <label>Min grid
-                  <input id="somMinGrid" type="number" value="3" min="3" max="20" step="1">
-                  <span class="field-note">Optimizasyon bu kare grid boyutundan başlar.</span>
-                </label>
-                <label>Maks grid
-                  <input id="somMaxGrid" type="number" value="8" min="3" max="20" step="1">
-                  <span class="field-note">Optimizasyon 3x3'ten bu değere kadar kare gridleri dener.</span>
-                </label>
-                <label>Renklendirilecek sonu&ccedil;
-                  <select id="somResultMetric"></select>
-                  <span class="field-note">Bu Y sonucu SOM e&#287;itimine dahil edilmez; yaln&#305;zca h&uuml;cre renklendirme ve yorumlama i&ccedil;in kullan&#305;l&#305;r.</span>
-                </label>
-                <label>Harita tipi
-                  <select id="somMapMode">
-                    <option value="result">Sonu&ccedil; haritas&#305;</option>
-                    <option value="hits">Hit map</option>
-                    <option value="umatrix">U-Matrix</option>
-                  </select>
-                </label>
-              </div>
-              <div class="info-block">
-                <b>SOM E&#287;itim Parametreleri (X)</b>
-                <p class="section-note">SOM modeli yaln&#305;zca se&ccedil;ilen X parametreleriyle e&#287;itilir. Se&ccedil;ilen Y sonucu e&#287;itimde kullan&#305;lmaz; yaln&#305;zca harita h&uuml;crelerinin m&uuml;hendislik yorumunu yapmak i&ccedil;in sonradan renklendirilir. B&ouml;ylece modelin hasar sonucunu ezberlemesi engellenir.</p>
-                <div id="somXColumns" class="som-x-columns"></div>
-              </div>
-              <div id="somLeakageWarning" class="muted-box">Y sonu&ccedil; de&#287;i&#351;kenleri SOM e&#287;itim matrisine al&#305;nmaz; hedef s&#305;z&#305;nt&#305;s&#305; engellenir.</div>
-              <div id="somSummary" class="metric-grid chart-summary"></div>
-              <div id="somCanvas" class="som-canvas"></div>
-              <div id="somDetails" class="som-details muted-box">Bir h&uuml;creye t&#305;klay&#305;nca o k&uuml;medeki model/y&ouml;n kay&#305;tlar&#305; burada g&ouml;r&uuml;n&uuml;r.</div>
-              <div class="som-class-analysis">
-                <div class="section-head">
-                  <div>
-                    <h2>SOM Sınıf Analizi</h2>
-                    <p class="section-note">Renklendirilecek sonuç içindeki seçilen sınıf ya da aralık için karşılaştırmalı yorum: seçilen sınıf vs diğerleri, sınıf içi alt davranış grupları ve en saf / en yoğun hücreler.</p>
-                  </div>
-                </div>
-                <div class="grid three chart-controls">
-                  <label>İncelenecek sınıf / aralık
-                    <select id="somClassTarget"></select>
-                  </label>
-                  <label>Sayısal sonuç için aralık sayısı
-                    <input id="somBinCount" type="number" value="5" min="3" max="10" step="1">
-                    <span class="field-note">Renklendirilecek sonuç sayısalsa otomatik aralık sayısı.</span>
-                  </label>
-                  <label>Manuel aral&#305;klar
-                    <input id="somCustomBins" type="text" placeholder="&Ouml;rn: 0-0.02; 0.02-0.04; 0.04-0.08">
-                    <span class="field-note">&#304;stersen aral&#305;klar&#305; kendin yaz. Bi&ccedil;im: min-max; min-max. Doluysa otomatik aral&#305;k say&#305;s&#305; yerine bu kullan&#305;l&#305;r.</span>
-                  </label>
-                </div>
-                <div id="somClassAnalysis" class="som-details muted-box">SOM eğitilip sonuç değişkeni seçildiğinde sınıf analizi burada oluşur.</div>
-              </div>
-            </section>
-          </div>
-
           <div class="tab-panel" data-panel="machine-learning">
             <section class="results-panel">
               <div class="section-head">
                 <div>
-                  <h2>Makine &Ouml;&#287;renmesi</h2>
-                  <p class="section-note">Analiz edilen modellerden y&ouml;n bazl&#305; veri seti kurulur. &#304;lk plastik mafsal tipi, kritik eleman tipi, kritik seviye ve LS-CP riski i&ccedil;in se&ccedil;ilen algoritma e&#287;itilir. ML dosyalar&#305; &uuml;retim artefaktlar&#305;ndan ayr&#305; tutulur.</p>
+                  <h2>Machine Learning</h2>
+                  <p class="section-note">A direction-based dataset is built from analyzed models. The selected algorithm learns behavior classes, hinge location groups, FEMA capacity status, and numerical structural response targets from pre-analysis design parameters. ML files are kept separate from production artifacts.</p>
                 </div>
                 <div class="inline-actions">
-                  <button id="trainMlBtn" type="button">Modeli E&#287;it</button>
+                  <button id="trainMlBtn" type="button">Train Model</button>
                   <button id="saveMlBtn" type="button">Modeli Sakla</button>
-                  <button id="resetMlBtn" type="button" class="danger">ML Modelini S&#305;f&#305;rla</button>
+                  <button id="resetMlBtn" type="button" class="danger">Reset ML Model</button>
                 </div>
               </div>
               <div class="grid three">
                 <label>Algoritma
                   <select id="mlAlgorithm" name="ml_auto_train_algorithm">
                     <option value="knn">KNN</option>
-                    <option value="random_forest">Random Forest</option>
+                    <option value="random_forest" selected>Random Forest</option>
                     <option value="xgboost">XGBoost</option>
                     <option value="lightgbm">LightGBM</option>
                   </select>
-                  <span class="field-note">KNN ve Random Forest bu kurulumda d&#305;&#351; ba&#287;&#305;ml&#305;l&#305;ks&#305;z &ccedil;al&#305;&#351;&#305;r. XGBoost/LightGBM i&ccedil;in ilgili Python paketleri gerekir.</span>
+                  <span class="field-note">KNN and Random Forest work in this setup without extra dependencies. XGBoost/LightGBM require the relevant Python packages.</span>
                 </label>
                 <label>ML random seed<input id="mlRandomSeed" name="ml_random_seed" type="number" value="42" step="1"></label>
-                <label class="check"><input name="ml_preserve_existing_weights" type="checkbox">Mevcut ağırlıkları koru
-                  <span class="field-note">Açıksa Modeli Eğit öncesinde seçili algoritmanın mevcut ağırlıkları snapshot olarak saklanır; yeni model eski eğitim belleği ve yeni metadata ile geliştirilir.</span>
+                <label class="check"><input name="ml_preserve_existing_weights" type="checkbox">Preserve existing weights
+                  <span class="field-note">If enabled, the selected algorithm weights are snapshotted before training; the new model is improved using prior training memory and new metadata.</span>
                 </label>
-                <label class="check"><input name="ml_auto_train_after_generation" type="checkbox">Üretim bitince öğrenmeye devam et
-                  <span class="field-note">Açıksa üretim tamamlandığında seçili algoritma mevcut tüm metadata ve yeni sonuçlarla yeniden eğitilir. Ağırlıkları koru açıksa eski model yedeklenir.</span>
+                <label class="check"><input name="ml_auto_train_after_generation" type="checkbox">Continue learning after generation
+                  <span class="field-note">If enabled, the selected algorithm is retrained with all metadata and new results after generation. If preserve weights is enabled, the previous model is backed up.</span>
                 </label>
-                <label class="check"><input name="ml_use_som_features" type="checkbox">SOM özelliklerini ML'ye ekle
-                  <span class="field-note">Açıksa ML girdilerine SOM hücre konumu, BMU mesafesi, X parametre z-skorları ve X kombinasyonları eklenir. SOM yalnızca X parametreleriyle eğitilir; sonuç/Y bilgileri feature olarak kullanılmaz.</span>
-                 </label>
                </div>
               <div class="info-block">
-                <b>Makine &Ouml;&#287;renmesi Girdi Parametreleri (X)</b>
-                <p class="section-note">Bu liste SOM E&#287;itim Parametreleri ile ortakt&#305;r. Burada veya SOM sekmesinde yapt&#305;&#287;&#305;n se&ccedil;im iki tarafta da ayn&#305; anda g&uuml;ncellenir; ML modeli yaln&#305;zca se&ccedil;ili parametrelerle e&#287;itilir.</p>
+                <b>Machine Learning Girdi Parametreleri (X)</b>
+                <p class="section-note">The ML model is trained only with the selected input parameters. Output/result variables are excluded from the feature matrix to avoid target leakage.</p>
                 <div id="mlXColumns" class="som-x-columns"></div>
               </div>
               <div id="mlStatus" class="ml-panel"></div>
               <div class="info-block">
                 <b>Proxy Kalibrasyonu</b>
-                <p class="section-note">SAP2000'den elle d&#305;&#351;a aktar&#305;lan ger&ccedil;ek mafsal sonu&ccedil;lar&#305;yla proxy plastik rotasyon katsay&#305;lar&#305;n&#305; kalibre eder. Export dosyalar&#305;n&#305; <code>D:\sap2000_generated_models\hinge_validation\raw_exports</code> klas&ouml;r&uuml;ne koy.</p>
+                <p class="section-note">Calibrates proxy plastic-rotation coefficients using real hinge results manually exported from SAP2000. Put export files in D:\sap2000_generated_models\hinge_validation\raw_exports.</p>
                 <div class="inline-actions">
-                  <button id="selectValidationBtn" type="button">Do&#287;rulama Listesi Olu&#351;tur</button>
-                  <button id="calibrateProxyBtn" type="button">SAP Exportlar&#305;yla Kalibre Et</button>
+                  <button id="selectValidationBtn" type="button">Create Validation List</button>
+                  <button id="calibrateProxyBtn" type="button">Calibrate with SAP Exports</button>
                 </div>
-                <div id="calibrationStatus" class="muted-box">Hen&uuml;z kalibrasyon &ccedil;al&#305;&#351;t&#305;r&#305;lmad&#305;.</div>
+                <div id="calibrationStatus" class="muted-box">Calibration has not been run yet.</div>
               </div>
             </section>
           </div>
 
-          <div class="tab-panel" data-panel="prediction">
+          <div class="tab-panel" data-panel="behavior-ml">
             <section class="results-panel">
               <div class="section-head">
                 <div>
-                  <h2>Tahmin</h2>
-                  <p class="section-note">E&#287;itilen model, girilen parametrelere g&ouml;re X ve Y y&ouml;nleri i&ccedil;in ilk plastik mafsal&#305;n ve en kritik eleman&#305;n yakla&#351;&#305;k konumunu tahmin eder.</p>
+                  <h2>Behavior ML Analyses</h2>
+                  <p class="section-note">Runs Random Forest, XGBoost, and LightGBM analyses for article-oriented behavior and structural response targets. Categorical targets use one-vs-rest classification; numeric targets use regression.</p>
                 </div>
-                <button id="predictMlBtn" type="button">Tahmin Et</button>
+                <button id="runBehaviorMlBtn" type="button">Run Behavior Analysis</button>
               </div>
               <div class="grid three">
-                <label>Tahmin algoritması
-                  <select id="predictAlgorithm">
-                    <option value="knn">KNN</option>
-                    <option value="random_forest">Random Forest</option>
-                    <option value="xgboost">XGBoost</option>
-                    <option value="lightgbm">LightGBM</option>
+                <label>Main heading
+                  <select id="behaviorMlGroup">
+                    <option value="damage_classes">Damage Class Evaluations</option>
+                    <option value="rare_final">Rare Final-State Behaviors</option>
+                    <option value="rare_transition">Rare Initial and Transition Behaviors</option>
+                    <option value="performance_outliers">Performance-Level Outlier Behaviors</option>
+                    <option value="primary_analysis_targets">Primary Analysis Targets</option>
+                    <option value="directional_asymmetry">Directional Asymmetry Behaviors</option>
+                    <option value="structural_response_parameters">Structural Performance Response Parameters</option>
+                    <option value="supporting_performance_indicators">Supporting Performance Indicators</option>
                   </select>
+                  <span class="field-note">Choose the behavior family to evaluate.</span>
                 </label>
-                <label>Kat say&#305;s&#305;<input id="predStoryCount" type="number" value="6" min="1" step="1"></label>
-                <label>X a&ccedil;&#305;kl&#305;k say&#305;s&#305;<input id="predXBayCount" type="number" value="3" min="1" step="1"></label>
-                <label>Y a&ccedil;&#305;kl&#305;k say&#305;s&#305;<input id="predYBayCount" type="number" value="3" min="1" step="1"></label>
-                <label>Ort. X a&ccedil;&#305;kl&#305;k m<input id="predAvgSpanX" type="number" value="5.5" min="0" step="0.5"></label>
-                <label>Ort. Y a&ccedil;&#305;kl&#305;k m<input id="predAvgSpanY" type="number" value="5.5" min="0" step="0.5"></label>
-                <label>Maks X a&ccedil;&#305;kl&#305;k m<input id="predMaxSpanX" type="number" value="6.5" min="0" step="0.5"></label>
-                <label>Maks Y a&ccedil;&#305;kl&#305;k m<input id="predMaxSpanY" type="number" value="6.5" min="0" step="0.5"></label>
-                <label>Kat y&uuml;ksekli&#287;i m<input id="predStoryHeight" type="number" value="3.2" min="0" step="0.1"></label>
-                <label>Beton s&#305;n&#305;f&#305;<select id="predConcrete"><option>C25</option><option>C30</option><option>C35</option><option>C40</option></select></label>
-                <label>&Ccedil;elik s&#305;n&#305;f&#305;<select id="predSteel"><option>B420C</option><option>B500C</option></select></label>
-                <label>Zemin s&#305;n&#305;f&#305;<select id="predSoil"><option>ZA</option><option>ZB</option><option selected>ZC</option><option>ZD</option><option>ZE</option></select></label>
-                <label>Kolon geni&#351;li&#287;i m<input id="predColumnWidth" type="number" value="0.50" min="0" step="0.05"></label>
-                <label>Kolon y&uuml;ksekli&#287;i m<input id="predColumnDepth" type="number" value="0.50" min="0" step="0.05"></label>
-                <label>Kiri&#351; geni&#351;li&#287;i m<input id="predBeamWidth" type="number" value="0.30" min="0" step="0.05"></label>
-                <label>Kiri&#351; y&uuml;ksekli&#287;i m<input id="predBeamDepth" type="number" value="0.60" min="0" step="0.05"></label>
-                <label>Kolon donat&#305; oran&#305;<input id="predRhoCol" type="number" value="0.015" min="0" step="0.001"></label>
-                <label>Kiri&#351; &uuml;st donat&#305; oran&#305;<input id="predRhoBeamTop" type="number" value="0.012" min="0" step="0.001"></label>
-                <label>Kiri&#351; alt donat&#305; oran&#305;<input id="predRhoBeamBottom" type="number" value="0.008" min="0" step="0.001"></label>
-                <label>D&ouml;&#351;eme kal&#305;nl&#305;&#287;&#305; m<input id="predSlabThickness" type="number" value="0.18" min="0.08" step="0.01"></label>
-                <label>D&ouml;&#351;eme donat&#305; oran&#305;<input id="predSlabRebarRatio" type="number" value="0.0025" min="0" step="0.0005"></label>
-                <label>Radye kal&#305;nl&#305;&#287;&#305; m<input id="predRaftThickness" type="number" value="0.70" min="0" step="0.1"></label>
-                <label>Radye donat&#305; oran&#305;<input id="predRaftRebarRatio" type="number" value="0.0030" min="0" step="0.0005"></label>
-                <label>Zemin yatak katsay&#305;s&#305; kN/m3<input id="predSubgrade" type="number" value="50000" min="0" step="1000"></label>
-                 <label>Hedef drift<input id="predTargetDrift" type="number" value="0.04" min="0" step="0.001"></label>
-                 <label class="check"><input id="predHasShearWalls" type="checkbox">Perde var</label>
-                 <label>Temel tipi<select id="predFoundation"><option value="radye">Radye</option><option value="ankastre_taban">Ankastre taban</option></select></label>
-                 <label>Perde say&#305;s&#305;<input id="predWallCount" type="number" value="0" min="0" step="1"></label>
-                 <label>Perde kal&#305;nl&#305;&#287;&#305; m<input id="predWallThickness" type="number" value="0.25" min="0" step="0.05"></label>
-                 <label>Perde uzunlu&#287;u m<input id="predWallLength" type="number" value="2.5" min="0" step="0.5"></label>
-                 <label>Perde donat&#305; oran&#305;<input id="predWallRebarRatio" type="number" value="0.0025" min="0" step="0.0005"></label>
-               </div>
-              <div id="predictionResult" class="ml-panel"></div>
+                <label>Behavior to evaluate
+                  <select id="behaviorMlTarget">
+                    <option value="damage_bio">B-IO</option>
+                    <option value="damage_iols">IO-LS</option>
+                    <option value="damage_lscp">LS-CP</option>
+                  </select>
+                  <span class="field-note">The selected behavior is modeled as the positive class.</span>
+                </label>
+                <label>Random seed
+                  <input id="behaviorMlSeed" type="number" value="42" step="1">
+                  <span class="field-note">Keeps train/test splitting reproducible.</span>
+                </label>
+              </div>
+              <div class="chips behavior-ml-algorithms">
+                <label><input type="checkbox" value="random_forest" checked> Random Forest</label>
+                <label><input type="checkbox" value="xgboost" checked> XGBoost</label>
+                <label><input type="checkbox" value="lightgbm" checked> LightGBM</label>
+              </div>
+              <div id="behaviorMlStatus" class="ml-panel"></div>
             </section>
           </div>
+
         </form>
       </section>
 
       <aside class="side">
         <section class="status">
           <div class="status-line">
-            <span id="stateText">Hazır</span>
+            <span id="stateText">Ready</span>
             <span id="progressText">0 / 0</span>
           </div>
           <div class="meter"><span id="progressBar"></span></div>
           <div class="stats">
-            <div><b id="successCount">0</b><span>Başarılı</span></div>
-            <div><b id="failedCount">0</b><span>Başarısız</span></div>
+            <div><b id="successCount">0</b><span>Successful</span></div>
+            <div><b id="failedCount">0</b><span>Failed</span></div>
           </div>
           <p id="outputPath"></p>
         </section>
 
 
         <section>
-          <h2>Aday Önizleme</h2>
-          <div id="previewList" class="preview-list"></div>
-        </section>
-
-        <section>
-          <h2>Model Temsili Görselleri</h2>
+          <h2>Model Representative Views</h2>
           <div class="preview-toolbar">
-            <input id="previewSearch" type="search" placeholder="Model ara">
+            <input id="previewSearch" type="search" placeholder="Search model">
             <select id="previewRunFilter">
-              <option value="">Tüm run klasörleri</option>
+              <option value="">All run folders</option>
             </select>
+            <label class="inline-control">
+              <input id="previewShowAllRuns" type="checkbox">
+              Show all
+            </label>
             <span id="previewPageInfo" class="preview-page-info"></span>
           </div>
           <div id="previewGallery" class="preview-gallery"></div>
-          <div id="previewPagination" class="preview-pagination" aria-label="Model görseli sayfaları"></div>
+          <div id="previewPagination" class="preview-pagination" aria-label="Model preview pages"></div>
         </section>
 
         <section>
@@ -714,13 +623,13 @@
       <div class="modal-backdrop" data-close-preview></div>
       <div class="modal-panel">
         <div class="modal-head">
-          <h2 id="previewModalTitle">Model görseli</h2>
-          <button type="button" data-close-preview>Kapat</button>
+          <h2 id="previewModalTitle">Model image</h2>
+          <button type="button" data-close-preview>Close</button>
         </div>
-        <img id="previewModalImage" alt="Model görseli">
+        <img id="previewModalImage" alt="Model image">
       </div>
     </div>
 
-    <script src="/static/app.js?v=20260625somparamsfix1"></script>
+    <script src="/static/app.js?v=20260730behaviortargets1"></script>
   </body>
 </html>

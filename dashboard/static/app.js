@@ -8,16 +8,20 @@ const refreshChartsBtn = document.querySelector("#refreshChartsBtn");
 const trainMlBtn = document.querySelector("#trainMlBtn");
 const saveMlBtn = document.querySelector("#saveMlBtn");
 const resetMlBtn = document.querySelector("#resetMlBtn");
-const predictMlBtn = document.querySelector("#predictMlBtn");
+const runBehaviorMlBtn = document.querySelector("#runBehaviorMlBtn");
+const behaviorMlGroup = document.querySelector("#behaviorMlGroup");
+const behaviorMlTarget = document.querySelector("#behaviorMlTarget");
+const behaviorMlSeed = document.querySelector("#behaviorMlSeed");
+const behaviorMlStatus = document.querySelector("#behaviorMlStatus");
 const selectValidationBtn = document.querySelector("#selectValidationBtn");
 const calibrateProxyBtn = document.querySelector("#calibrateProxyBtn");
 const calibrationStatus = document.querySelector("#calibrationStatus");
 const mlStatus = document.querySelector("#mlStatus");
-const predictionResult = document.querySelector("#predictionResult");
 const previewList = document.querySelector("#previewList");
 const previewGallery = document.querySelector("#previewGallery");
 const previewSearch = document.querySelector("#previewSearch");
 const previewRunFilter = document.querySelector("#previewRunFilter");
+const previewShowAllRuns = document.querySelector("#previewShowAllRuns");
 const previewPageInfo = document.querySelector("#previewPageInfo");
 const previewPagination = document.querySelector("#previewPagination");
 const pushoverResults = document.querySelector("#pushoverResults");
@@ -63,16 +67,548 @@ const outputPath = document.querySelector("#outputPath");
 let defaults = {};
 let statusTimer = null;
 let latestModelResults = [];
+let latestChartResults = [];
+let chartsLoadedForOutputDir = "";
 let latestSom = null;
 let latestSomClassTargets = [];
+let behaviorMlMetadata = null;
 let somClassRenderTimer = null;
 let somRepresentativeView = null;
 const OUTPUT_DIR_STORAGE_KEY = "sap2000_dashboard_output_dir";
+const LEGACY_OUTPUT_DIRS = new Set(["d:\\sap2000_generated_models"]);
 const SHARED_X_COLUMNS_STORAGE_KEY = "sap2000_dashboard_shared_x_columns";
 const PREVIEW_PAGE_SIZE = 50;
 let sharedXColumns = null;
 let previewCurrentPage = 1;
 let previewSearchTimer = null;
+
+const fallbackBehaviorMlMetadata = {
+  groups: [
+    {
+      id: "damage_classes",
+      label: "Damage Class Evaluations",
+      targets: [
+        { id: "damage_bio", label: "B-IO" },
+        { id: "damage_iols", label: "IO-LS" },
+        { id: "damage_lscp", label: "LS-CP" }
+      ]
+    },
+    {
+      id: "rare_final",
+      label: "Rare Final-State Behaviors",
+      targets: [
+        { id: "critical_beam", label: "Critical element remains beam-controlled" },
+        { id: "critical_middle", label: "Critical element occurs on an interior axis" },
+        { id: "critical_upper", label: "Critical element occurs above the first story" }
+      ]
+    },
+    {
+      id: "rare_transition",
+      label: "Rare Initial and Transition Behaviors",
+      targets: [
+        { id: "first_hinge_story_ge_3", label: "First plastic hinge starts at story 3 or above" },
+        { id: "beam_to_beam", label: "Starts in beam and remains beam-critical" },
+        { id: "upper_to_upper", label: "Starts in upper story and remains upper-story critical" },
+        { id: "edge_to_middle", label: "Starts on edge axis and shifts to interior axis" },
+        { id: "beam_middle_to_column_edge", label: "Beam/interior initiation shifting to column/edge criticality" }
+      ]
+    },
+    {
+      id: "performance_outliers",
+      label: "Performance-Level Outlier Behaviors",
+      targets: [
+        { id: "low_drift_high_damage", label: "LS-CP+ high damage at low target drift" },
+        { id: "high_drift_limited_damage", label: "B-IO/IO-LS limited damage at high target drift" },
+        { id: "early_ls_step_le_5", label: "Very early LS occurrence, step <= 5" },
+        { id: "high_drift_only_bio", label: "B-IO only despite high target drift" }
+      ]
+    },
+    {
+      id: "primary_analysis_targets",
+      label: "Primary Analysis Targets",
+      targets: [
+        { id: "critical_element_type_beam", label: "Critical element type: beam rather than column" },
+        { id: "first_hinge_type_beam", label: "First plastic hinge element type: beam rather than column" },
+        { id: "critical_element_story", label: "Critical element story number" },
+        { id: "critical_element_plan_zone", label: "Critical element plan zone: interior axis rather than edge axis" }
+      ]
+    },
+    {
+      id: "directional_asymmetry",
+      label: "Directional Asymmetry Behaviors",
+      targets: [
+        { id: "damage_rank_diff_ge_2", label: "X/Y critical damage level differs by at least two stages" },
+        { id: "one_lscp_plus_other_limited", label: "LS-CP+ in one direction, B-IO/IO-LS in the other" },
+        { id: "critical_type_diff", label: "X/Y critical element type differs" },
+        { id: "critical_story_diff", label: "X/Y critical story differs" },
+        { id: "critical_axis_diff", label: "X/Y critical axis location differs" }
+      ]
+    },
+    {
+      id: "structural_response_parameters",
+      label: "Structural Performance Response Parameters",
+      targets: [
+        { id: "first_hinge_story", label: "First plastic hinge story" },
+        { id: "first_hinge_plan_zone", label: "First plastic hinge on interior axis" },
+        { id: "max_story_drift_ratio", label: "Maximum interstory drift ratio" },
+        { id: "max_rotation", label: "Maximum plastic rotation" },
+        { id: "peak_base_shear", label: "Peak base shear" }
+      ]
+    },
+    {
+      id: "supporting_performance_indicators",
+      label: "Supporting Performance Indicators",
+      targets: [
+        { id: "lscp_ratio", label: "LS-CP hinge-event ratio among all recorded hinge events" },
+        { id: "cp_ratio", label: "CP-C or more severe hinge-event ratio among all recorded hinge events" },
+        { id: "has_lscp", label: "At least one LS-CP hinge event occurs" },
+        { id: "has_cp", label: "At least one CP-C or more severe hinge event occurs" },
+        { id: "fema_target_capacity_ratio", label: "FEMA 440 displacement-modification target-to-capacity ratio" },
+        { id: "fema_capacity_status_exceeded", label: "FEMA 440 capacity status: target displacement exceeds capacity" }
+      ]
+    }
+  ],
+  algorithms: ["random_forest", "xgboost", "lightgbm"]
+};
+
+behaviorMlMetadata = fallbackBehaviorMlMetadata;
+
+const dashboardTranslations = [
+  ["Betonarme model üretimi, ön eleme kontrolleri ve pushover ayar paneli", "Reinforced concrete model generation, preliminary checks, and pushover control panel"],
+  ["Y sonuç değişkenleri SOM eğitim matrisine alınmaz; hedef sızıntısı engellenir.", "Y/result variables are not included in the SOM training matrix; target leakage is prevented."],
+  ["Bu değişken pushover sonucu elde edilen bir performans çıktısıdır.", "This variable is a performance output obtained from the pushover result."],
+  ["SOM eğitimine dahil edilirse hasar bilgisi modele sızar ve sonuç yapay olarak iyileşir.", "If it is included in SOM training, damage information leaks into the model and the result is artificially improved."],
+  ["Bu değişken yalnızca renklendirme/yorumlama için kullanılmalıdır.", "This variable should only be used for coloring and interpretation."],
+  ["SOM modeli yalnızca seçilen X parametreleriyle eğitilir.", "The SOM model is trained only with the selected X parameters."],
+  ["Seçilen Y sonucu eğitimde kullanılmaz; yalnızca harita hücrelerinin mühendislik yorumunu yapmak için sonradan renklendirilir.", "The selected Y result is not used for training; it is applied afterward only to color and interpret map cells."],
+  ["Böylece modelin hasar sonucunu ezberlemesi engellenir.", "This prevents the model from memorizing the damage result."],
+  ["Self Organizing Map, modelleri yalnızca X parametre benzerliğine göre 2B haritaya yerleştirir.", "The Self Organizing Map places models on a 2D map using only X-parameter similarity."],
+  ["Seçilen model parametresini pushover/proxy mafsal sonucu ile karşılaştırır.", "Compares the selected model parameter with pushover/proxy hinge results."],
+  ["Grafikler dashboarddaki mevcut model sonuçlarından üretilir.", "Charts are generated from the model results currently available in the dashboard."],
+  ["Analiz sonrası kapasite eğrileri, taban kesmesi-çatı deplasmanı bilgileri ve plastik mafsal özetleri burada listelenir.", "After analysis, capacity curves, base shear-roof displacement data, and plastic hinge summaries are listed here."],
+  ["Renklendirilecek sonuç içindeki seçilen sınıf ya da aralık için karşılaştırmalı yorum", "Comparative interpretation for the selected class or interval within the colored result"],
+  ["seçilen sınıf vs diğerleri, sınıf içi alt davranış grupları ve en saf / en yoğun hücreler", "selected class vs others, within-class behavior subgroups, and the purest / densest cells"],
+  ["Aşağıda seçilen sınıfa düşen kayıtların X parametre profili, diğer tüm kayıtlarla karşılaştırılır.", "Below, the X-parameter profile of records in the selected class is compared with all other records."],
+  ["Skor büyüdükçe ayırt edicilik artar.", "Higher score means stronger discrimination."],
+  ["Aynı sonuca farklı SOM bölgelerinde ulaşılan her hücre ayrı değerlendirilir.", "Each cell that reaches the same result in a different SOM region is evaluated separately."],
+  ["Böylece aynı performans düzeyine farklı yapısal mekanizmalarla gidilmiş olabilecek tüm hücrelerin temsilci özellikleri tek tek görülebilir.", "This makes it possible to inspect representative properties of cells that may reach the same performance level through different structural mechanisms."],
+  ["Seçilen sınıfın hem temsil gücü yüksek hem de örnek sayısı yoğun hücreleri ayrıca işaretlenir.", "Cells with both high representativeness and high sample density for the selected class are highlighted separately."],
+  ["Ortak kalan sürücüler etkili parametreler olarak yorumlanabilir.", "Shared remaining drivers can be interpreted as influential parameters."],
+  ["En saf ve en yoğun listelerinin birleşimi alınır.", "The union of the purest and densest lists is used."],
+  ["Bu küme, seçilen sınıfın güçlü temsilci hücre havuzunu verir.", "This set gives the strong representative-cell pool for the selected class."],
+  ["Hem en saf hem de en yoğun listesinde tekrar eden hücreler, seçilen sınıfın en karakteristik SOM hücreleri olarak yorumlanabilir.", "Cells repeated in both the purest and densest lists can be interpreted as the most characteristic SOM cells for the selected class."],
+  ["Buradaki birleşim yalnızca ortak ayırıcı parametre-durum paylaşan hücreler arasında yapılır.", "This merge is performed only between cells sharing common distinguishing parameter-state patterns."],
+  ["Yani önce ortak sürücüler aranır, sonra ancak bunları paylaşan hücreler aynı davranış tipine alınır.", "In other words, common drivers are found first, and only cells sharing them are assigned to the same behavior type."],
+  ["Alt tablo hücre bazlı ham ayrımı gösterir.", "The lower table shows the raw cell-based separation."],
+  ["Üstteki birleştirilmiş davranış tipleri ise benzer hücreleri birlikte yorumlar.", "The merged behavior types above interpret similar cells together."],
+  ["Dolu hücrelerin ortalama kayıt sayısı altında kalan hücreler elendi.", "Cells below the average hit count of occupied cells were filtered out."],
+  ["Kalan hücrelerde, seçili sonuç değerinin komşuluk bölgesinin kayıt ağırlıklı sonucuna yakınlığı ve hücre+komşuluk kayıt yoğunluğu birlikte puanlandı.", "For remaining cells, closeness to the record-weighted neighborhood result and cell-plus-neighborhood density were scored together."],
+  ["Yönetmelik/ön eleme", "Code/pre-screening"],
+  ["Yönetmelik sınırı değildir", "Not a code limit"],
+  ["Yaygın parametrik adım", "Common parametric step"],
+  ["Yaygın", "Common"],
+  ["Aday havuzu", "Candidate pool"],
+  ["Ön değerlendirme", "Preliminary assessment"],
+  ["nihai tasarım yerine geçmez", "does not replace final design"],
+  ["nihai tasarım", "final design"],
+  ["ön kabul", "preliminary assumption"],
+  ["placeholder", "placeholder"],
+  ["Önizle", "Preview"],
+  ["Çıktıları Temizle", "Clear Outputs"],
+  ["Durdur", "Stop"],
+  ["Üretimi Başlat", "Start Generation"],
+  ["Ayar grupları", "Setting groups"],
+  ["Genel", "General"],
+  ["Geometri", "Geometry"],
+  ["Malzeme", "Material"],
+  ["Donatı", "Reinforcement"],
+  ["Temel/Zemin", "Foundation/Soil"],
+  ["Kontrol", "Checks"],
+  ["Sonuçlar", "Results"],
+  ["Grafikler", "Charts"],
+  ["SOM Analizi", "SOM Analysis"],
+  ["Makine Öğrenmesi", "Machine Learning"],
+  ["Tahmin", "Prediction"],
+  ["Model adedi", "Model count"],
+  ["Maksimum deneme", "Maximum attempts"],
+  ["Çıktı klasörü", "Output folder"],
+  ["SAP2000 exe yolu", "SAP2000 exe path"],
+  ["SAP2000 açık kalsın", "Keep SAP2000 open"],
+  ["Kat min", "Story min"],
+  ["Kat max", "Story max"],
+  ["Kat sayısı", "Story count"],
+  ["Açıklık sayısı", "Bay count"],
+  ["Açıklık mesafesi", "Bay length"],
+  ["Açıklık min m", "Bay length min m"],
+  ["Açıklık max m", "Bay length max m"],
+  ["Açıklık adımı m", "Bay length step m"],
+  ["Kat yüksekliği min m", "Story height min m"],
+  ["Kat yüksekliği max m", "Story height max m"],
+  ["Kat yüksekliği adımı m", "Story height step m"],
+  ["Kat yüksekliği", "Story height"],
+  ["Yapı yüksekliği", "Building height"],
+  ["Toplam yükseklik", "Total height"],
+  ["Kolon kesitleri", "Column sections"],
+  ["Kolon kesit alanı", "Column section area"],
+  ["Kolon genişliği", "Column width"],
+  ["Kolon yüksekliği", "Column depth"],
+  ["Kolon alanı", "Column area"],
+  ["Kolon/kiriş rijitlik oranı", "Column/beam stiffness ratio"],
+  ["Kolon donatı aday oranları", "Column reinforcement candidate ratios"],
+  ["Kolon donatı alt sınırı", "Column reinforcement lower limit"],
+  ["Kolon donatı üst sınırı", "Column reinforcement upper limit"],
+  ["Kolon donatı oranı", "Column reinforcement ratio"],
+  ["Kiriş kesitleri", "Beam sections"],
+  ["Kiriş genişliği", "Beam width"],
+  ["Kiriş yüksekliği", "Beam depth"],
+  ["Kiriş alanı", "Beam area"],
+  ["Kiriş donatı alt sınırı", "Beam reinforcement lower limit"],
+  ["Kiriş donatı üst sınırı", "Beam reinforcement upper limit"],
+  ["Kiriş üst donatı oranı", "Beam top reinforcement ratio"],
+  ["Kiriş alt donatı oranı", "Beam bottom reinforcement ratio"],
+  ["Kiriş üst donatı aday oranları", "Beam top reinforcement candidate ratios"],
+  ["Kiriş alt donatı aday oranları", "Beam bottom reinforcement candidate ratios"],
+  ["Döşeme parametreleri", "Slab parameters"],
+  ["Döşeme kalınlığı", "Slab thickness"],
+  ["Döşeme kalınlığı min m", "Slab thickness min m"],
+  ["Döşeme kalınlığı max m", "Slab thickness max m"],
+  ["Döşeme kalınlığı adımı m", "Slab thickness step m"],
+  ["Döşeme donatı oranı", "Slab reinforcement ratio"],
+  ["Kat döşemelerini shell modelle", "Model floor slabs as shells"],
+  ["Perde boyutu notu", "Shear wall dimension note"],
+  ["Perde parametreleri", "Shear wall parameters"],
+  ["Perde ekle", "Add shear walls"],
+  ["Perde var/yok", "Shear wall yes/no"],
+  ["Perde var", "Has shear wall"],
+  ["Perde sayısı", "Shear wall count"],
+  ["Perde alanı", "Shear wall area"],
+  ["Perde kalınlığı", "Shear wall thickness"],
+  ["Perde kalınlığı min m", "Shear wall thickness min m"],
+  ["Perde kalınlığı max m", "Shear wall thickness max m"],
+  ["Perde kalınlığı adımı m", "Shear wall thickness step m"],
+  ["Perde uzunluğu", "Shear wall length"],
+  ["Perde uzunluğu min m", "Shear wall length min m"],
+  ["Perde uzunluğu max m", "Shear wall length max m"],
+  ["Perde uzunluğu adımı m", "Shear wall length step m"],
+  ["Perde donatı oranı", "Shear wall reinforcement ratio"],
+  ["Perde donatı alt sınırı", "Shear wall reinforcement lower limit"],
+  ["Perde donatı üst sınırı", "Shear wall reinforcement upper limit"],
+  ["Perde donatı aday oranları", "Shear wall reinforcement candidate ratios"],
+  ["Perde yerleşimi", "Shear wall placement"],
+  ["Radye temel modelle", "Model raft foundation"],
+  ["Radye kalınlığı", "Raft thickness"],
+  ["Radye kalınlığı min m", "Raft thickness min m"],
+  ["Radye kalınlığı max m", "Raft thickness max m"],
+  ["Radye kalınlığı adımı m", "Raft thickness step m"],
+  ["Radye kenar taşması m", "Raft edge offset m"],
+  ["Radye donatı oranı", "Raft reinforcement ratio"],
+  ["Radye donatı alt sınırı", "Raft reinforcement lower limit"],
+  ["Radye donatı üst sınırı", "Raft reinforcement upper limit"],
+  ["Radye temel donatı aday oranları", "Raft foundation reinforcement candidate ratios"],
+  ["Zemin sınıfı", "Soil class"],
+  ["Zemin sınıfları", "Soil classes"],
+  ["Zemin yatak katsayıları kN/m3", "Soil subgrade moduli kN/m3"],
+  ["Zemin yatak katsayısı", "Subgrade modulus"],
+  ["Beton sınıfları", "Concrete classes"],
+  ["Beton sınıfı", "Concrete class"],
+  ["Çelik sınıfları", "Steel classes"],
+  ["Çelik sınıfı", "Steel class"],
+  ["Güçlü kolon katsayısı", "Strong-column factor"],
+  ["Yönler", "Directions"],
+  ["Hedef drift adımı", "Target drift step"],
+  ["Hedef drift", "Target drift"],
+  ["Yük dağılımı", "Load distribution"],
+  ["Taban kesme proxy kN", "Base shear proxy kN"],
+  ["Mafsal atanamazsa modeli ele", "Reject model if hinges cannot be assigned"],
+  ["Kolon M2/M3 mafsalı", "Column M2/M3 hinge"],
+  ["Kiriş M3 mafsalı", "Beam M3 hinge"],
+  ["V2/V3 kesme mafsalı", "V2/V3 shear hinge"],
+  ["Kolon mafsal property", "Column hinge property"],
+  ["Kiriş mafsal property", "Beam hinge property"],
+  ["Pushover Sonuçları", "Pushover Results"],
+  ["Grafik tipi", "Chart type"],
+  ["Grup ortalaması", "Group average"],
+  ["X parametresi", "X parameter"],
+  ["Y sonucu", "Y result"],
+  ["Renk / grup", "Color / group"],
+  ["Veri yok olanları gizle", "Hide missing values"],
+  ["Boyutu Optimize Et", "Optimize Size"],
+  ["Temsilci Seç", "Select Representative"],
+  ["SOM Eğit", "Train SOM"],
+  ["Yenile", "Refresh"],
+  ["Genişlik", "Width"],
+  ["Yükseklik", "Height"],
+  ["Iterasyon", "Iteration"],
+  ["Maks grid", "Max grid"],
+  ["Renklendirilecek sonuç", "Result to color"],
+  ["Harita tipi", "Map type"],
+  ["Sonuç haritası", "Result map"],
+  ["SOM Eğitim Parametreleri (X)", "SOM Training Parameters (X)"],
+  ["SOM Sınıf Analizi", "SOM Class Analysis"],
+  ["İncelenecek sınıf / aralık", "Class / interval to inspect"],
+  ["Sayısal sonuç için aralık sayısı", "Number of bins for numeric result"],
+  ["Manuel aralıklar", "Manual intervals"],
+  ["Makine Öğrenmesi Girdi Parametreleri (X)", "Machine Learning Input Parameters (X)"],
+  ["Modeli Eğit", "Train Model"],
+  ["Modeli Sakla", "Save Model"],
+  ["ML Modelini Sıfırla", "Reset ML Model"],
+  ["Mevcut ağırlıkları koru", "Preserve existing weights"],
+  ["Üretim bitince öğrenmeye devam et", "Continue learning after generation"],
+  ["Tahmin algoritması", "Prediction algorithm"],
+  ["Tahmin Et", "Predict"],
+  ["Hazır", "Ready"],
+  ["Başarılı", "Successful"],
+  ["Başarısız", "Failed"],
+  ["Aday Önizleme", "Candidate Preview"],
+  ["Model Temsili Görselleri", "Model Representative Views"],
+  ["Model ara", "Search model"],
+  ["Tüm run klasörleri", "All run folders"],
+  ["Model görseli sayfaları", "Model preview pages"],
+  ["Model görseli", "Model image"],
+  ["Kapat", "Close"],
+  ["SAP2000'de Aç", "Open in SAP2000"],
+  ["Kapasite eğrisi", "Capacity curve"],
+  ["Pushover kapasite eğrisi", "Pushover capacity curve"],
+  ["deplasman", "displacement"],
+  ["Göreli kat ötelemesi", "Interstory drift"],
+  ["Maksimum göreli kat ötelenmesi", "Maximum interstory drift"],
+  ["Maks. göreli kat ötelenmesi", "Max. interstory drift"],
+  ["Maks. taban kesmesi", "Max. base shear"],
+  ["Maksimum taban kesmesi", "Maximum base shear"],
+  ["Son tepe deplasmanı", "Final roof displacement"],
+  ["Maks. plastik rotasyon", "Max. plastic rotation"],
+  ["Maksimum plastik rotasyon", "Maximum plastic rotation"],
+  ["Kritik drift katı", "Critical drift story"],
+  ["İlk mafsal tipi", "First hinge type"],
+  ["İlk plastik mafsal katı", "First plastic hinge story"],
+  ["İlk plastik mafsal kenarda/ortada", "First plastic hinge edge/middle"],
+  ["Kritik eleman tipi", "Critical element type"],
+  ["Kritik eleman katı", "Critical element story"],
+  ["Kritik eleman kenarda/ortada", "Critical element edge/middle"],
+  ["Kritik hasar seviyesi", "Critical damage state"],
+  ["Maksimum mafsal durumu", "Maximum hinge state"],
+  ["Hedef deplasmanda performans seviyesi", "Performance level at target displacement"],
+  ["Taban kesme kapasitesi", "Base shear capacity"],
+  ["Maksimum deplasman", "Maximum displacement"],
+  ["Hedef deplasman", "Target displacement"],
+  ["Süneklik oranı", "Ductility ratio"],
+  ["Göçme mekanizması", "Collapse mechanism"],
+  ["LS-CP olay sayısı", "LS-CP event count"],
+  ["CP-C olay sayısı", "CP-C event count"],
+  ["LS-CP eleman sayısı", "LS-CP element count"],
+  ["CP eleman sayısı", "CP element count"],
+  ["LS-CP oranı", "LS-CP ratio"],
+  ["CP oranı", "CP ratio"],
+  ["İlk plastik mafsal adımı", "First plastic hinge step"],
+  ["İlk LS adımı", "First LS step"],
+  ["İlk CP adımı", "First CP step"],
+  ["FEMA 440 süneklik", "FEMA 440 ductility"],
+  ["FEMA 440 etkin sönüm", "FEMA 440 effective damping"],
+  ["FEMA 440 hedef/kapasite oranı", "FEMA 440 target/capacity ratio"],
+  ["FEMA 440 kapasite durumu", "FEMA 440 capacity status"],
+  ["FEMA 440 hedef deplasman proxy", "FEMA 440 target displacement proxy"],
+  ["Kapasite içinde", "Within capacity"],
+  ["Sınıra yakın", "Near capacity"],
+  ["Kapasite üstü", "Capacity exceeded"],
+  ["Hesaplanamadı", "Not available"],
+  ["Kayıt", "Records"],
+  ["Diğer kayıt", "Other records"],
+  ["Dolu hücre", "Occupied cells"],
+  ["Hücre", "Cell"],
+  ["Denenen aralık", "Tried range"],
+  ["X parametre", "X parameters"],
+  ["Temsilci seçim aktif", "Representative selection active"],
+  ["Temsilci hücre", "Representative cell"],
+  ["Yansıtılan sonuç", "Projected result"],
+  ["Temsil skoru", "Representation score"],
+  ["Dolu hücre ort. kayıt", "Avg. records in occupied cells"],
+  ["Temsilci kayıt", "Representative records"],
+  ["Komşuluk kayıt", "Neighborhood records"],
+  ["Sonuç / komşuluk", "Result / neighborhood"],
+  ["Sonuç yakınlığı", "Result proximity"],
+  ["Yoğunluk skoru", "Density score"],
+  ["Temsilci seçim stratejisi", "Representative selection strategy"],
+  ["Gösterilen komşular", "Shown neighbors"],
+  ["Seçili sonuç", "Selected result"],
+  ["Ort. kat / yükseklik", "Avg. story / height"],
+  ["Ort. kolon alanı", "Avg. column area"],
+  ["En ayırıcı X parametreleri", "Most distinctive X parameters"],
+  ["Parametre", "Parameter"],
+  ["Küme ort.", "Cluster avg."],
+  ["Genel ort.", "Overall avg."],
+  ["Yorum", "Interpretation"],
+  ["Tüm seçili X parametreleri", "All selected X parameters"],
+  ["Tip", "Type"],
+  ["Küme değeri", "Cluster value"],
+  ["Dağılım / aralık", "Distribution / range"],
+  ["Seçili Y dağılımı", "Selected Y distribution"],
+  ["Seçili Y istatistikleri", "Selected Y statistics"],
+  ["Sınıf", "Class"],
+  ["Satır", "Rows"],
+  ["Kategori sayısı", "Category count"],
+  ["En sık", "Most frequent"],
+  ["Kayıt sayısı", "Record count"],
+  ["Grup kayıt sayısı", "Group record count"],
+  ["kayıt yoğunluğu", "record density"],
+  ["ortalaması", "average"],
+  ["Birleşik skor", "Composite score"],
+  ["A. Seçilen sınıf vs diğer tüm sınıflar", "A. Selected class vs all other classes"],
+  ["B. Seçilen sınıfın kendi içindeki alt davranış grupları", "B. Sub-behavior groups within the selected class"],
+  ["C. En saf ve en yoğun SOM hücreleri", "C. Purest and densest SOM cells"],
+  ["Birleştirilmiş davranış tipleri", "Merged behavior types"],
+  ["Birleşik tip", "Merged type"],
+  ["Toplam kayıt", "Total records"],
+  ["Ort. saflık", "Avg. purity"],
+  ["Birleşim gücü", "Merge strength"],
+  ["Ortak ayırıcılar", "Shared discriminators"],
+  ["En saf hücreler", "Purest cells"],
+  ["En yoğun hücreler", "Densest cells"],
+  ["Birleşik üst hücre kümesi", "Union of top cells"],
+  ["Ortak ana temsilci hücreler", "Common main representative cells"],
+  ["Ortak ana temsilci hücrelere ait ortak kalan etkili parametreler", "Shared influential parameters of common main representative cells"],
+  ["Tüm üst hücrelerde ortak kalan etkili parametreler", "Shared influential parameters across all top cells"],
+  ["Yön", "Direction"],
+  ["Tekrar", "Repeat"],
+  ["Bu hücreye özgü ayırıcılar", "Cell-specific discriminators"],
+  ["Ortak sürücü skoru", "Shared driver score"],
+  ["Hücre toplamı", "Cell total"],
+  ["Saflık", "Purity"],
+  ["Davranış Tipi", "Behavior Type"],
+  ["Hasar Özeti", "Damage Summary"],
+  ["İlk LS", "First LS"],
+  ["İlk CP", "First CP"],
+  ["Kritik eleman", "Critical element"],
+  ["İlk plastik mafsal", "First plastic hinge"],
+  ["İlk kolon mafsalı", "First column hinge"],
+  ["İlk LS seviyesi", "First LS level"],
+  ["İlk CP seviyesi", "First CP level"],
+  ["Kritik mafsal olayları", "Critical hinge events"],
+  ["Adım bilgileri", "Step information"],
+  ["Step number", "Step number"],
+  ["Load step", "Load step"],
+  ["Roof displacement m", "Roof displacement m"],
+  ["Base shear kN", "Base shear kN"],
+  ["Eleman", "Element"],
+  ["Konum", "Location"],
+  ["Seviye", "State"],
+  ["Rot.", "Rot."],
+  ["Ulaşmadı", "Not reached"],
+  ["Okunamadı", "Could not read"],
+  ["Bu eşik analiz adımları içinde görülmedi.", "This threshold was not observed within the analysis steps."],
+  ["Gerçek adım geçmişi yok.", "No real step history."],
+  ["SAP2000 sadece Max/Min envelope sonucu verdi.", "SAP2000 returned only Max/Min envelope results."],
+  ["Alttaki tablo kritik eleman proxy bilgisidir; ilk oluşum adımı olarak yorumlanmamalıdır.", "The table below is critical-element proxy information; it should not be interpreted as the first occurrence step."],
+  ["Plastik mafsal oluşmadı.", "No plastic hinge formed."],
+  ["Plastik mafsal olusmadi", "No plastic hinge formed"],
+  ["Mafsal özeti yok", "No hinge summary"],
+  ["Mafsal özeti", "Hinge summary"],
+  ["gerçek SAP Frame Hinge States exportu", "actual SAP Frame Hinge States export"],
+  ["proxy hinge hesabı", "proxy hinge calculation"],
+  ["henüz okunmadı", "not read yet"],
+  ["İstek başarısız oldu.", "Request failed."],
+  ["Sunucu JSON yerine beklenmeyen bir cevap döndürdü.", "Server returned an unexpected response instead of JSON."],
+  ["İstek zaman aşımına uğradı.", "Request timed out."],
+  ["SOM için grid/iterasyon değerini düşürebilir veya tekrar deneyebilirsin.", "For SOM, reduce the grid/iteration value or try again."],
+  ["Sunucu JSON yerine HTML/boş cevap döndürdü. Dashboard server'ı yeniden başlatmak gerekebilir.", "Server returned HTML/empty response instead of JSON. The dashboard server may need to be restarted."],
+  ["Henüz SOM eğitilmedi.", "SOM has not been trained yet."],
+  ["SOM eğitiliyor...", "Training SOM..."],
+  ["SOM boyutu optimize ediliyor...", "Optimizing SOM size..."],
+  ["Bu işlem özellikle büyük grid ve yüksek iterasyonda birkaç dakika sürebilir. Sayfayı kapatma.", "This can take a few minutes for large grids and high iteration counts. Do not close the page."],
+  ["Min grid, maks grid değerinden büyük olamaz.", "Min grid cannot be greater than max grid."],
+  ["SOM eğitimi için en az bir X parametresi seçmelisin.", "Select at least one X parameter for SOM training."],
+  ["Bu değişkenler Y sonucudur ve X eğitim matrisine alınamaz", "These variables are Y results and cannot be included in the X training matrix"],
+  ["Temsilci seçimi için önce SOM eğitilmelidir.", "Train SOM before selecting a representative."],
+  ["Temsilci seçilecek yeterli dolu hücre bulunamadı.", "Not enough occupied cells were found for representative selection."],
+  ["Model eğitiliyor...", "Training model..."],
+  ["Model saklandı", "Model saved"],
+  ["ML modeli silinecek. SAP2000 model çıktıları korunacak. Devam edilsin mi?", "The ML model will be deleted. SAP2000 model outputs will be preserved. Continue?"],
+  ["Henüz kalibrasyon çalıştırılmadı.", "Calibration has not been run yet."],
+  ["SAP2000 model açma isteği gönderildi", "SAP2000 open-model request sent"],
+  ["boş", "empty"],
+  ["Veri yok", "No data"],
+  ["veri yok", "no data"],
+  ["Kenar", "Edge"],
+  ["Orta", "Middle"],
+  ["yüksek", "high"],
+  ["düşük", "low"],
+  ["arası", "range"],
+  ["yakın", "near"],
+  ["civarı", "around"],
+  ["komşuluk", "neighborhood"],
+  ["komşuluk baskın sınıfıyla uyumlu", "consistent with the neighborhood dominant class"],
+  ["komşuluk baskın sınıfından farklı", "different from the neighborhood dominant class"],
+  ["Seçili sınıf genel profilinde de tekrar ediyor.", "Also repeats in the selected class overall profile."],
+  ["Üst hücrelerde tekrar ediyor.", "Repeats in top cells."],
+  ["X kritik", "X critical"],
+  ["X ilk", "X first"],
+  ["Y kritik", "Y critical"],
+  ["Y ilk", "Y first"],
+  ["Elevasyon", "Elevation"],
+  ["Kolon", "Column"],
+  ["Kiriş", "Beam"],
+  ["Kiris", "Beam"],
+  ["Radye", "Raft"],
+  ["Temel tipi", "Foundation type"],
+  ["Ankastre taban", "Fixed base"],
+  ["Bilinmeyen", "Unknown"],
+  ["Hata", "Error"],
+  ["Uyarı", "Warning"],
+];
+
+const sortedDashboardTranslations = dashboardTranslations.sort((left, right) => right[0].length - left[0].length);
+
+function translateDashboardText(text) {
+  let translated = String(text);
+  sortedDashboardTranslations.forEach(([source, target]) => {
+    translated = translated.split(source).join(target);
+  });
+  return translated;
+}
+
+function translateDashboard(root = document.body) {
+  if (!root) return;
+  const translateAttributes = (element) => {
+    ["placeholder", "title", "aria-label", "alt"].forEach((attribute) => {
+      if (!element.hasAttribute?.(attribute)) return;
+      const value = element.getAttribute(attribute);
+      const translated = translateDashboardText(value);
+      if (translated !== value) element.setAttribute(attribute, translated);
+    });
+  };
+  if (root.nodeType === Node.ELEMENT_NODE) translateAttributes(root);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  let node = walker.currentNode;
+  while (node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const translated = translateDashboardText(node.nodeValue);
+      if (translated !== node.nodeValue) node.nodeValue = translated;
+    } else if (node.nodeType === Node.ELEMENT_NODE && !["SCRIPT", "STYLE"].includes(node.tagName)) {
+      translateAttributes(node);
+    }
+    node = walker.nextNode();
+  }
+}
+
+function installDashboardTranslation() {
+  translateDashboard();
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const translated = translateDashboardText(node.nodeValue);
+          if (translated !== node.nodeValue) node.nodeValue = translated;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          translateDashboard(node);
+        }
+      });
+      if (mutation.type === "characterData") {
+        const translated = translateDashboardText(mutation.target.nodeValue);
+        if (translated !== mutation.target.nodeValue) mutation.target.nodeValue = translated;
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
 
 const chartMetrics = {
   x: [
@@ -293,16 +829,25 @@ document.querySelectorAll(".tab").forEach((button) => {
     document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
     button.classList.add("active");
     document.querySelector(`[data-panel="${button.dataset.tab}"]`).classList.add("active");
+    if (button.dataset.tab === "charts") {
+      refreshCharts().catch((error) => {
+        if (chartCanvas) chartCanvas.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
+      });
+    }
   });
 });
 
 document.querySelector("#addColumnSection").addEventListener("click", () => addSectionRow("columnSections", { width: 0.5, depth: 0.5 }));
 document.querySelector("#addBeamSection").addEventListener("click", () => addSectionRow("beamSections", { width: 0.3, depth: 0.6 }));
-previewBtn.addEventListener("click", previewCandidates);
+previewBtn?.addEventListener("click", previewCandidates);
 clearBtn.addEventListener("click", clearArtifacts);
 stopBtn.addEventListener("click", stopRun);
 runBtn.addEventListener("click", startRun);
 previewRunFilter?.addEventListener("change", () => {
+  previewCurrentPage = 1;
+  refreshArtifacts();
+});
+previewShowAllRuns?.addEventListener("change", () => {
   previewCurrentPage = 1;
   refreshArtifacts();
 });
@@ -334,10 +879,18 @@ somCustomBins?.addEventListener("change", renderSom);
 trainMlBtn?.addEventListener("click", trainMlModel);
 saveMlBtn?.addEventListener("click", saveMlSnapshot);
 resetMlBtn?.addEventListener("click", resetMlModel);
-predictMlBtn?.addEventListener("click", predictMlModel);
+runBehaviorMlBtn?.addEventListener("click", runBehaviorMlAnalysis);
+behaviorMlGroup?.addEventListener("change", renderBehaviorMlTargets);
+document.addEventListener("change", (event) => {
+  if (event.target instanceof HTMLSelectElement && event.target.id === "behaviorMlGroup") {
+    renderBehaviorMlTargets();
+  }
+});
 selectValidationBtn?.addEventListener("click", selectHingeValidationSubset);
 calibrateProxyBtn?.addEventListener("click", calibrateHingeProxy);
-[chartType, chartXMetric, chartYMetric, chartColorMetric, chartHideMissing].forEach((input) => input?.addEventListener("change", renderCharts));
+[chartType, chartXMetric, chartYMetric, chartColorMetric, chartHideMissing].forEach((input) => input?.addEventListener("change", () => {
+  renderCharts(latestChartResults.length ? latestChartResults : latestModelResults);
+}));
 form.elements.fix_pushover_target_drift_ratio?.addEventListener("change", updatePushoverDriftMode);
 document.querySelectorAll("[data-close-preview]").forEach((button) => {
   button.addEventListener("click", closePreviewModal);
@@ -346,12 +899,23 @@ document.querySelectorAll("[data-close-preview]").forEach((button) => {
 async function init() {
   try {
     populateChartControls();
-    populateSomControls(defaultSomMetrics);
     defaults = await fetchJson("/api/defaults");
     hydrateForm(defaults);
     renderStatus(await fetchJson("/api/status"));
-    await refreshSom();
+    await refreshBehaviorMlMetadata().catch((error) => {
+      behaviorMlMetadata = fallbackBehaviorMlMetadata;
+      renderBehaviorMlGroups();
+      if (behaviorMlStatus) {
+        behaviorMlStatus.innerHTML = `<div class="muted-box">Behavior list loaded from local fallback. Restart the dashboard server if API metadata is unavailable: ${escapeHtml(error.message)}</div>`;
+      }
+    });
+    await refreshMlInputParameters();
     await refreshArtifacts();
+    window.setTimeout(() => {
+      refreshResults().catch((error) => {
+        if (pushoverResults) pushoverResults.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
+      });
+    }, 100);
     window.setTimeout(() => {
       refreshMlStatus().catch((error) => {
         if (mlStatus) mlStatus.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
@@ -386,14 +950,20 @@ function hydrateForm(config) {
   renderRatioInputs("wallRebarRatios", config.wall_rebar_ratios || []);
   renderRatioInputs("slabRebarRatios", config.slab_rebar_ratios || []);
   renderRatioInputs("raftRebarRatios", config.raft_rebar_ratios || []);
-  applyStoredOutputDir();
+  applyStoredOutputDir(config.output_dir);
   updatePushoverDriftMode();
 }
 
-function applyStoredOutputDir() {
+function applyStoredOutputDir(defaultOutputDir = "") {
   const stored = readStoredOutputDir();
-  if (stored && form.elements.output_dir) {
+  if (!form.elements.output_dir) return;
+  if (stored && !LEGACY_OUTPUT_DIRS.has(stored.toLowerCase())) {
     form.elements.output_dir.value = stored;
+    return;
+  }
+  if (defaultOutputDir) {
+    form.elements.output_dir.value = defaultOutputDir;
+    storeOutputDir(defaultOutputDir);
   }
 }
 
@@ -539,6 +1109,7 @@ function collectConfig() {
   config.raft_rebar_ratios = collectRatioInputs("raftRebarRatios");
   config.column_sections = collectSections("columnSections");
   config.beam_sections = collectSections("beamSections");
+  config.ml_use_som_features = false;
   storeOutputDir(config.output_dir);
   return config;
 }
@@ -570,6 +1141,7 @@ function collectRatioInputs(containerId) {
 }
 
 async function previewCandidates() {
+  if (!previewBtn || !previewList) return;
   previewBtn.disabled = true;
   previewList.innerHTML = "";
   try {
@@ -583,6 +1155,7 @@ async function previewCandidates() {
 }
 
 function renderPreview(candidates) {
+  if (!previewList) return;
   previewList.innerHTML = "";
   candidates.forEach((candidate) => {
     const item = document.createElement("div");
@@ -642,7 +1215,7 @@ async function clearArtifacts() {
   clearBtn.disabled = true;
   try {
     await postJson("/api/clear-artifacts", { config });
-    previewList.innerHTML = "";
+    if (previewList) previewList.innerHTML = "";
     await refreshArtifacts();
     await pollStatus();
   } catch (error) {
@@ -687,6 +1260,8 @@ async function refreshArtifacts() {
     limit: String(PREVIEW_PAGE_SIZE),
     search: previewSearch?.value || "",
     run: previewRunFilter?.value || "",
+    mode: previewShowAllRuns?.checked ? "all" : "recent",
+    output_dir: form.elements.output_dir?.value || "",
   });
   const inventory = await fetchJson(`/api/artifacts?${params.toString()}`);
   const total = Number(inventory.preview_total_count ?? inventory.preview_count ?? 0);
@@ -802,7 +1377,8 @@ function renderPreviewPagination(inventory) {
 }
 
 async function refreshResults() {
-  const results = await fetchJson("/api/model-results");
+  const params = new URLSearchParams({ output_dir: form.elements.output_dir?.value || "" });
+  const results = await fetchJson(`/api/model-results?${params.toString()}`);
   const models = results.models || [];
   const runningMessage = String(results.message || "").toLowerCase().includes("devam");
   if (!models.length && runningMessage && latestModelResults.length) {
@@ -817,8 +1393,13 @@ async function refreshResults() {
 }
 
 async function refreshCharts() {
-  const results = await refreshResults();
-  renderCharts(results.models || []);
+  const outputDir = form.elements.output_dir?.value || "";
+  const params = new URLSearchParams({ output_dir: outputDir });
+  const results = await fetchJson(`/api/chart-results?${params.toString()}`);
+  latestChartResults = results.models || [];
+  chartsLoadedForOutputDir = outputDir;
+  renderCharts(latestChartResults);
+  return results;
 }
 
 function populateChartControls() {
@@ -832,6 +1413,13 @@ function populateSomControls(metrics) {
   const mergedMetrics = { ...(metrics || {}), ...defaultSomMetrics };
   const entries = Object.entries(mergedMetrics).map(([key, meta]) => ({ key, label: meta.label || key }));
   fillSelect(somResultMetric, entries, "max_story_drift_ratio");
+}
+
+async function refreshMlInputParameters() {
+  if (!mlXColumns) return null;
+  const metadata = await fetchJson("/api/som/metadata");
+  renderSomXColumns(metadata);
+  return metadata;
 }
 
 function renderSomXColumns(status) {
@@ -1020,13 +1608,207 @@ function selectSomRepresentative() {
   const metricKey = somResultMetric?.value || latestSom.result_metric || "max_story_drift_ratio";
   const metrics = latestSom.result_metrics || defaultSomMetrics;
   const metric = metrics[metricKey] || defaultSomMetrics.max_story_drift_ratio;
-  const representative = computeSomRepresentative(latestSom, metricKey, metric);
+  const target = selectedSomClassTarget();
+  const representative = computeSomRepresentative(latestSom, metricKey, metric, target);
   if (!representative) {
     if (somDetails) somDetails.innerHTML = `<div class="muted-box">Temsilci seçilecek yeterli dolu hücre bulunamadı.</div>`;
     return;
   }
   somRepresentativeView = representative;
   renderSom();
+}
+
+function selectedSomClassTarget() {
+  if (!latestSomClassTargets.length) {
+    const rows = Array.isArray(latestSom?.analysis_rows) ? latestSom.analysis_rows : [];
+    const metricKey = somResultMetric?.value || latestSom?.result_metric || "max_story_drift_ratio";
+    const metrics = latestSom?.result_metrics || defaultSomMetrics;
+    const metric = metrics[metricKey] || defaultSomMetrics.max_story_drift_ratio;
+    latestSomClassTargets = buildSomClassTargets(rows, metricKey, metric);
+  }
+  return latestSomClassTargets.find((item) => item.id === somClassTarget?.value) || latestSomClassTargets[0] || null;
+}
+
+async function refreshBehaviorMlMetadata() {
+  if (!behaviorMlGroup || !behaviorMlTarget) return null;
+  behaviorMlMetadata = await fetchJson("/api/behavior-ml/metadata");
+  renderBehaviorMlGroups();
+  return behaviorMlMetadata;
+}
+
+function renderBehaviorMlGroups() {
+  if (!behaviorMlGroup || !behaviorMlTarget) return;
+  behaviorMlMetadata = behaviorMlMetadata || fallbackBehaviorMlMetadata;
+  behaviorMlGroup.innerHTML = (behaviorMlMetadata.groups || [])
+    .map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.label)}</option>`)
+    .join("");
+  renderBehaviorMlTargets();
+}
+
+function renderBehaviorMlTargets() {
+  if (!behaviorMlTarget || !behaviorMlMetadata) return;
+  const group = (behaviorMlMetadata.groups || []).find((item) => item.id === behaviorMlGroup?.value) || (behaviorMlMetadata.groups || [])[0];
+  behaviorMlTarget.innerHTML = (group?.targets || [])
+    .map((target) => `<option value="${escapeHtml(target.id)}">${escapeHtml(target.label)}</option>`)
+    .join("");
+}
+
+function selectedBehaviorAlgorithms() {
+  return Array.from(document.querySelectorAll(".behavior-ml-algorithms input[type='checkbox']:checked"))
+    .map((input) => input.value)
+    .filter(Boolean);
+}
+
+async function runBehaviorMlAnalysis() {
+  if (!behaviorMlStatus) return;
+  const algorithms = selectedBehaviorAlgorithms();
+  if (!algorithms.length) {
+    behaviorMlStatus.innerHTML = `<div class="error-box">Select at least one algorithm.</div>`;
+    return;
+  }
+  behaviorMlStatus.innerHTML = `<div class="muted-box">Behavior ML analysis is running...</div>`;
+  if (runBehaviorMlBtn) runBehaviorMlBtn.disabled = true;
+  try {
+    const response = await postJson("/api/behavior-ml/analyze", {
+      config: collectConfig(),
+      group_id: behaviorMlGroup?.value || "",
+      target_id: behaviorMlTarget?.value || "",
+      algorithms,
+      random_seed: Number(behaviorMlSeed?.value || 42)
+    }, 180000);
+    renderBehaviorMlResult(response.result);
+  } catch (error) {
+    behaviorMlStatus.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
+  } finally {
+    if (runBehaviorMlBtn) runBehaviorMlBtn.disabled = false;
+  }
+}
+
+function renderBehaviorMlResult(result) {
+  if (!behaviorMlStatus) return;
+  const metrics = result.metrics || [];
+  const profiles = result.feature_profiles || [];
+  const comments = result.comments || [];
+  const importances = result.feature_importance || [];
+  const isRegression = result.task === "regression";
+  const consensus = behaviorMlConsensus(importances).slice(0, 10);
+  const performanceTable = isRegression ? `
+    <table class="info-table">
+      <thead><tr><th>Model</th><th>R²</th><th>MAE</th><th>RMSE</th><th>Comment</th></tr></thead>
+      <tbody>
+        ${metrics.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.model)}</td>
+            <td>${formatNumber(row.r2, 3)}</td>
+            <td>${formatNumber(row.mae, 3)}</td>
+            <td>${formatNumber(row.rmse, 3)}</td>
+            <td>${escapeHtml(behaviorRegressionMetricComment(row))}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  ` : `
+    <table class="info-table">
+      <thead><tr><th>Model</th><th>ROC-AUC</th><th>PR-AUC</th><th>Balanced accuracy</th><th>Comment</th></tr></thead>
+      <tbody>
+        ${metrics.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.model)}</td>
+            <td>${formatNumber(row.roc_auc, 3)}</td>
+            <td>${formatNumber(row.pr_auc, 3)}</td>
+            <td>${formatNumber(row.balanced_accuracy, 3)}</td>
+            <td>${escapeHtml(behaviorMetricComment(row))}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  const profileHeaders = isRegression
+    ? ["Parameter", "Upper target quartile", "Lower target quartile", "General", "Interpretation"]
+    : ["Parameter", "Selected class", "Others", "General", "Interpretation"];
+  behaviorMlStatus.innerHTML = `
+    <div class="metric-grid">
+      <div><span>Heading</span><b>${escapeHtml(result.group_label || "-")}</b></div>
+      <div><span>${isRegression ? "Numeric target" : "Behavior"}</span><b>${escapeHtml(result.target_label || "-")}</b></div>
+      <div><span>Dataset</span><b>${escapeHtml(result.dataset_type || "-")}</b></div>
+      <div><span>Sample count</span><b>${escapeHtml(result.sample_count || 0)}</b></div>
+      ${isRegression ? `<div><span>Task</span><b>Regression</b></div>` : `<div><span>Positive class</span><b>${escapeHtml(result.positive_count || 0)} (${formatPercent(result.positive_rate || 0)})</b></div>`}
+    </div>
+    <div class="muted-box">${comments.map((item) => `<div>${escapeHtml(item)}</div>`).join("")}</div>
+    <h3>Model Performance</h3>
+    ${performanceTable}
+    <h3>Most Representative Parameters</h3>
+    <table class="info-table">
+      <thead><tr>${profileHeaders.map((item) => `<th>${escapeHtml(item)}</th>`).join("")}</tr></thead>
+      <tbody>
+        ${profiles.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.feature_label || row.feature)}</td>
+            <td>${escapeHtml(row.positive)}</td>
+            <td>${escapeHtml(row.others)}</td>
+            <td>${escapeHtml(row.general)}</td>
+            <td>${escapeHtml(row.comment || "")}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <h3>Cross-Model Importance Consensus</h3>
+    <table class="info-table">
+      <thead><tr><th>Parameter</th><th>Seen in model count</th><th>Mean importance share</th></tr></thead>
+      <tbody>
+        ${consensus.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.label)}</td>
+            <td>${escapeHtml(row.models)}</td>
+            <td>${formatPercent(row.share)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <p class="section-note">${escapeHtml(result.method_note || "")}</p>
+  `;
+}
+
+function behaviorMlConsensus(rows) {
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const key = row.feature || "";
+    if (!key) return;
+    const item = grouped.get(key) || { feature: key, label: row.feature_label || key, shares: [], models: new Set() };
+    item.shares.push(Number(row.importance_share || 0));
+    item.models.add(row.model || row.algorithm || "");
+    grouped.set(key, item);
+  });
+  return Array.from(grouped.values())
+    .map((item) => ({
+      feature: item.feature,
+      label: item.label,
+      models: item.models.size,
+      share: item.shares.reduce((sum, value) => sum + value, 0) / Math.max(item.shares.length, 1)
+    }))
+    .sort((left, right) => (right.models - left.models) || (right.share - left.share));
+}
+
+function behaviorMetricComment(row) {
+  const roc = Number(row.roc_auc || 0);
+  const pr = Number(row.pr_auc || 0);
+  const ba = Number(row.balanced_accuracy || 0);
+  if (roc >= 0.9 && pr >= 0.4 && ba >= 0.75) return "Strong separation; suitable for parameter interpretation.";
+  if (roc >= 0.8 && ba >= 0.65) return "Moderate separation; interpret as parametric tendency.";
+  if (roc >= 0.75) return "Limited separation; use with caution.";
+  return "Weak separation; not suitable for strong generalization.";
+}
+
+function behaviorRegressionMetricComment(row) {
+  const r2 = Number(row.r2 || 0);
+  if (r2 >= 0.8) return "Strong numeric fit; suitable for parameter interpretation.";
+  if (r2 >= 0.5) return "Moderate numeric fit; interpret trends rather than exact values.";
+  if (r2 >= 0.25) return "Limited numeric fit; useful mainly for exploratory ranking.";
+  return "Weak numeric fit; do not use for strong generalization.";
+}
+
+function formatPercent(value) {
+  return `${(Number(value || 0) * 100).toFixed(2)}%`;
 }
 
 async function refreshMlStatus() {
@@ -1045,7 +1827,7 @@ async function trainMlModel() {
       algorithm: document.querySelector("#mlAlgorithm")?.value || "knn",
       random_seed: Number(document.querySelector("#mlRandomSeed")?.value || 42),
       preserve_existing: Boolean(form.elements.ml_preserve_existing_weights?.checked),
-      use_som_features: Boolean(form.elements.ml_use_som_features?.checked),
+      use_som_features: false,
       selected_x_columns: selectedSomXColumns()
     });
     renderMlStatus(response.result);
@@ -1189,7 +1971,7 @@ function renderMlStatus(status) {
     <div class="metric-grid">
       <div><span>Veri</span><b>${escapeHtml(status.sample_count || status.dataset_count || 0)}</b></div>
       <div><span>Model</span><b>${escapeHtml(status.algorithm || "KNN")}</b></div>
-      <div><span>SOM özellikleri</span><b>${status.use_som_features ? "Açık" : "Kapalı"}</b></div>
+      <div><span>Model yapısı</span><b>Tek aşamalı</b></div>
       <div><span>Seçili X parametresi</span><b>${escapeHtml((status.selected_x_columns || []).length || 0)}</b></div>
       <div><span>Dosya</span><b>${escapeHtml(status.model_path || "")}</b></div>
     </div>
@@ -1214,10 +1996,16 @@ function metricCard(target, metric) {
 
 function targetLabel(target) {
   return {
+    damage_class: "Damage class",
     first_hinge_type: "İlk mafsal tipi",
     critical_element_type: "Kritik eleman tipi",
     critical_state: "Kritik seviye",
+    first_hinge_plan_zone: "İlk mafsal aks bölgesi",
+    critical_element_plan_zone: "Kritik eleman aks bölgesi",
+    first_hinge_story_group: "İlk mafsal kat grubu",
+    critical_element_story_group: "Kritik eleman kat grubu",
     has_lscp: "LS-CP riski",
+    has_cp: "CP-C+ riski",
     first_column_available: "İlk kolon mafsalı",
     first_ls_available: "İlk LS seviyesi",
     first_cp_available: "İlk CP seviyesi"
@@ -1275,6 +2063,11 @@ function renderDirectionPrediction(direction, result) {
       <strong>${escapeHtml(critical.element_name || "-")}</strong>
       <span>${predictionMeta(predictions.critical_element_type, metrics.critical_element_type)}</span>
       <span>Kritik seviye: ${escapeHtml(predictions.critical_state?.prediction || "-")} / ${predictionMeta(predictions.critical_state, metrics.critical_state)}</span>
+      <span>Hasar sınıfı: ${escapeHtml(predictions.damage_class?.prediction || "-")} / ${predictionMeta(predictions.damage_class, metrics.damage_class)}</span>
+      <span>İlk mafsal aksı: ${escapeHtml(predictions.first_hinge_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.first_hinge_plan_zone, metrics.first_hinge_plan_zone)}</span>
+      <span>Kritik aks: ${escapeHtml(predictions.critical_element_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.critical_element_plan_zone, metrics.critical_element_plan_zone)}</span>
+      <span>İlk mafsal kat grubu: ${escapeHtml(predictions.first_hinge_story_group?.prediction || "-")}</span>
+      <span>Kritik kat grubu: ${escapeHtml(predictions.critical_element_story_group?.prediction || "-")}</span>
       <span>İlk kolon mafsalı: ${escapeHtml(predictions.first_column_available?.prediction || "-")}</span>
       <strong>${escapeHtml(firstColumn.available === false ? "Ulaşmadı" : (firstColumn.element_name || "-"))}</strong>
       <span>${predictionMeta(predictions.first_column_available, metrics.first_column_available)}</span>
@@ -1285,6 +2078,7 @@ function renderDirectionPrediction(direction, result) {
       <strong>${escapeHtml(firstCp.available === false ? "Ulaşmadı" : (firstCp.element_name || "-"))}</strong>
       <span>${predictionMeta(predictions.first_cp_available, metrics.first_cp_available)}</span>
       <span>LS-CP: ${escapeHtml(predictions.has_lscp?.prediction || "-")} / ${predictionMeta(predictions.has_lscp, metrics.has_lscp)}</span>
+      <span>CP-C+: ${escapeHtml(predictions.has_cp?.prediction || "-")} / ${predictionMeta(predictions.has_cp, metrics.has_cp)}</span>
       ${Object.entries(regressionPredictions).map(([target, value]) => `<span>${escapeHtml(regressionTargetLabel(target))}: <strong>${formatNumber(value)}</strong></span>`).join("")}
     </div>
   `;
@@ -1952,6 +2746,9 @@ function regressionTargetLabel(target) {
     max_rotation: "Maksimum plastik rotasyon",
     max_story_drift_ratio: "Maksimum göreli kat ötelenmesi",
     max_displacement: "Tepe deplasmanı",
+    first_hinge_story: "İlk plastik mafsal katı",
+    critical_element_story: "Kritik eleman katı",
+    fema_target_capacity_ratio: "FEMA 440 hedef/kapasite oranı",
     fema_ductility_mu: "FEMA 440 süneklik μ",
     fema_beta_eff_percent: "FEMA 440 etkin sönüm",
     fema_target_displacement_proxy: "FEMA 440 hedef deplasman proxy"
@@ -2609,20 +3406,20 @@ function renderSomOptimizationBlock(optimization) {
     <div class="som-optimization-block">
       <div class="som-optimization-head">
         <div>
-          <b>SOM boyut optimizasyonu</b>
-          <p class="section-note">Makale gorseli icin uygun ozet: her kare grid adayi icin birlesik optimizasyon skoru, QE, topographic error ve purity karsilastirilir; secilen optimum boyut vurgulanir.</p>
+          <b>SOM Size Optimization</b>
+          <p class="section-note">Article-ready summary: for each square grid candidate, the composite optimization score, QE, topographic error, and purity are compared; the selected optimum size is highlighted.</p>
         </div>
         <div class="som-optimization-badges">
-          <span>Secilen: ${escapeHtml(selectedKey)}</span>
-          <span>Skor: ${formatNumber(optimization.selected_score)}</span>
-          <span>Aday: ${escapeHtml(candidates.length)}</span>
+          <span>Selected: ${escapeHtml(selectedKey)}</span>
+          <span>Score: ${formatNumber(optimization.selected_score)}</span>
+          <span>Candidates: ${escapeHtml(candidates.length)}</span>
         </div>
       </div>
       <div class="som-optimization-chart-wrap">
         ${somOptimizationSvg(candidates, selectedKey)}
       </div>
       <table class="info-table som-optimization-table">
-        <thead><tr><th>Grid</th><th>Opt. skor</th><th>QE</th><th>Topo. error</th><th>Purity</th><th>Durum</th></tr></thead>
+        <thead><tr><th>Grid</th><th>Opt. score</th><th>QE</th><th>Topo. error</th><th>Purity</th><th>Status</th></tr></thead>
         <tbody>
           ${candidates.map((item) => {
             const key = `${item.width}x${item.height}`;
@@ -2634,7 +3431,7 @@ function renderSomOptimizationBlock(optimization) {
                 <td>${formatNumber(item.quantization_error)}</td>
                 <td>${formatNumber(item.topographic_error)}</td>
                 <td>${item.purity === null || item.purity === undefined ? "-" : formatPercent(item.purity)}</td>
-                <td>${selected ? "Secildi" : "-"}</td>
+                <td>${selected ? "Selected" : "-"}</td>
               </tr>
             `;
           }).join("")}
@@ -2664,8 +3461,8 @@ function somOptimizationSvg(candidates, selectedKey) {
   const gridTicks = 4;
   const yTicks = Array.from({ length: gridTicks + 1 }, (_, index) => minValue + ((maxValue - minValue) * index) / gridTicks);
   return `
-    <svg class="analysis-chart som-optimization-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="SOM boyut optimizasyon skoru grafiği">
-      <text x="${margin.left}" y="18" class="chart-title">SOM boyut optimizasyonu</text>
+    <svg class="analysis-chart som-optimization-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="SOM size optimization score chart">
+      <text x="${margin.left}" y="18" class="chart-title">SOM Size Optimization</text>
       ${yTicks.map((tick) => {
         const y = yFor(tick);
         return `
@@ -2687,35 +3484,53 @@ function somOptimizationSvg(candidates, selectedKey) {
           ${selected ? `<text x="${x}" y="${y - 12}" text-anchor="middle" class="axis-label">optimum</text>` : ""}
         `;
       }).join("")}
-      <text x="${margin.left - 38}" y="${margin.top + innerHeight / 2}" transform="rotate(-90 ${margin.left - 38} ${margin.top + innerHeight / 2})" class="axis-name">Birleşik skor</text>
-      <text x="${margin.left + innerWidth / 2}" y="${height - 8}" text-anchor="middle" class="axis-name">Grid boyutu</text>
+      <text x="${margin.left - 38}" y="${margin.top + innerHeight / 2}" transform="rotate(-90 ${margin.left - 38} ${margin.top + innerHeight / 2})" class="axis-name">Composite score</text>
+      <text x="${margin.left + innerWidth / 2}" y="${height - 8}" text-anchor="middle" class="axis-name">Grid size</text>
     </svg>
   `;
 }
 
-function computeSomRepresentative(som, metricKey, metric) {
+function computeSomRepresentative(som, metricKey, metric, target = null) {
   const cells = Array.isArray(som.cells) ? som.cells : [];
   const filled = cells.filter((cell) => Number(cell.hit_count || 0) > 0);
   if (!filled.length) return null;
-  const avgHitCount = filled.reduce((sum, cell) => sum + Number(cell.hit_count || 0), 0) / filled.length;
-  const candidates = filled.filter((cell) => Number(cell.hit_count || 0) >= avgHitCount);
+  const targetStats = target ? somTargetCellStats(som, metricKey, target) : null;
+  const targetCellCounts = targetStats ? [...targetStats.cellCounts.values()].filter((count) => Number(count || 0) > 0) : [];
+  const avgHitCount = targetStats && targetCellCounts.length
+    ? targetCellCounts.reduce((sum, count) => sum + Number(count || 0), 0) / targetCellCounts.length
+    : filled.reduce((sum, cell) => sum + Number(cell.hit_count || 0), 0) / filled.length;
+  let candidates = filled.filter((cell) => {
+    if (!targetStats) return Number(cell.hit_count || 0) >= avgHitCount;
+    const count = Number(targetStats.cellCounts.get(somCellKey(cell)) || 0);
+    return count > 0 && count >= avgHitCount;
+  });
+  if (!candidates.length && targetStats) {
+    candidates = filled.filter((cell) => Number(targetStats.cellCounts.get(somCellKey(cell)) || 0) > 0);
+  }
   if (!candidates.length) return null;
   const cellMap = new Map(cells.map((cell) => [somCellKey(cell), cell]));
   const numericValues = filled.map((cell) => Number(somMetricSummary(cell, metricKey).avg)).filter(Number.isFinite);
   const valueRange = numericValues.length ? Math.max(...numericValues) - Math.min(...numericValues) : 0;
-  const maxCellHit = Math.max(...filled.map((cell) => Number(cell.hit_count || 0)), 1);
+  const maxCellHit = targetStats
+    ? Math.max(...targetCellCounts, 1)
+    : Math.max(...filled.map((cell) => Number(cell.hit_count || 0)), 1);
   const scored = candidates.map((cell) => {
     const neighbors = somNeighborCells(cell, cellMap).filter((neighbor) => Number(neighbor.hit_count || 0) > 0);
-    const neighborhoodHitCount = neighbors.reduce((sum, neighbor) => sum + Number(neighbor.hit_count || 0), 0);
-    return { cell, neighbors, neighborhoodHitCount, cellHitScore: Number(cell.hit_count || 0) / maxCellHit };
+    const cellTargetCount = targetStats ? Number(targetStats.cellCounts.get(somCellKey(cell)) || 0) : Number(cell.hit_count || 0);
+    const neighborhoodHitCount = neighbors.reduce((sum, neighbor) => {
+      return sum + (targetStats ? Number(targetStats.cellCounts.get(somCellKey(neighbor)) || 0) : Number(neighbor.hit_count || 0));
+    }, 0);
+    return { cell, neighbors, neighborhoodHitCount, cellHitScore: cellTargetCount / maxCellHit, cellTargetCount };
   });
   const maxNeighborhoodHit = Math.max(...scored.map((item) => item.neighborhoodHitCount), 1);
   const finalScored = scored.map((item) => {
     const cellSummary = somMetricSummary(item.cell, metricKey);
     const densityScore = 0.5 * item.cellHitScore + 0.5 * (item.neighborhoodHitCount / maxNeighborhoodHit);
-    const resultScore = metric?.type === "category"
-      ? categoryNeighborhoodScore(item.neighbors, metricKey, cellSummary)
-      : numericNeighborhoodScore(item.neighbors, metricKey, cellSummary, valueRange);
+    const resultScore = targetStats
+      ? targetNeighborhoodScore(item.cell, item.neighbors, targetStats)
+      : metric?.type === "category"
+        ? categoryNeighborhoodScore(item.neighbors, metricKey, cellSummary)
+        : numericNeighborhoodScore(item.neighbors, metricKey, cellSummary, valueRange);
     return { ...item, score: 0.55 * resultScore.proximity + 0.45 * densityScore, densityScore, resultScore };
   }).sort((a, b) => (
     b.score - a.score ||
@@ -2730,6 +3545,8 @@ function computeSomRepresentative(som, metricKey, metric) {
   return {
     metricKey,
     metricLabel: metric?.label || metricKey,
+    target,
+    targetLabel: target?.label || "",
     averageHitCount: avgHitCount,
     candidates: finalScored,
     cell: best.cell,
@@ -2740,6 +3557,61 @@ function computeSomRepresentative(som, metricKey, metric) {
     densityScore: best.densityScore,
     resultScore: best.resultScore,
     neighborhoodHitCount: best.neighborhoodHitCount,
+    cellTargetCount: best.cellTargetCount,
+    targetCellValueStats: targetStats?.cellValueStats || null,
+  };
+}
+
+function somTargetCellStats(som, metricKey, target) {
+  const rows = Array.isArray(som.analysis_rows) ? som.analysis_rows : [];
+  const cellTotals = new Map();
+  const cellCounts = new Map();
+  const cellValues = new Map();
+  rows.forEach((row) => {
+    const key = cellKeyOf(row);
+    cellTotals.set(key, (cellTotals.get(key) || 0) + 1);
+    if (somRowMatchesTarget(row, target, metricKey)) {
+      cellCounts.set(key, (cellCounts.get(key) || 0) + 1);
+      const value = Number(row[metricKey]);
+      if (Number.isFinite(value)) {
+        if (!cellValues.has(key)) cellValues.set(key, []);
+        cellValues.get(key).push(value);
+      }
+    }
+  });
+  const cellValueStats = new Map([...cellValues.entries()].map(([key, values]) => [key, numericStats(values)]));
+  return { target, cellTotals, cellCounts, cellValueStats };
+}
+
+function targetNeighborhoodScore(cell, neighbors, targetStats) {
+  const cellKey = somCellKey(cell);
+  const cellTargetCount = Number(targetStats.cellCounts.get(cellKey) || 0);
+  const cellTotal = Number(targetStats.cellTotals.get(cellKey) || cell.hit_count || 0);
+  const cellPurity = cellTargetCount / Math.max(cellTotal, 1);
+  const cellTargetStats = targetStats.cellValueStats?.get(cellKey) || null;
+  const neighborTargetStats = neighbors
+    .map((neighbor) => targetStats.cellValueStats?.get(somCellKey(neighbor)))
+    .filter(Boolean);
+  const neighborhoodTargetValueCount = neighborTargetStats.reduce((sum, stats) => sum + Number(stats.count || 0), 0);
+  const neighborhoodTargetAvg = neighborhoodTargetValueCount
+    ? neighborTargetStats.reduce((sum, stats) => sum + Number(stats.avg || 0) * Number(stats.count || 0), 0) / neighborhoodTargetValueCount
+    : NaN;
+  const neighborhoodTargetCount = neighbors.reduce((sum, neighbor) => sum + Number(targetStats.cellCounts.get(somCellKey(neighbor)) || 0), 0);
+  const neighborhoodTotal = neighbors.reduce((sum, neighbor) => sum + Number(targetStats.cellTotals.get(somCellKey(neighbor)) || neighbor.hit_count || 0), 0);
+  const neighborhoodPurity = neighborhoodTargetCount / Math.max(neighborhoodTotal, 1);
+  return {
+    proximity: 0.65 * cellPurity + 0.35 * neighborhoodPurity,
+    cellCategory: targetStats.target?.label || "-",
+    neighborhoodCategory: targetStats.target?.label || "-",
+    cellPurity,
+    neighborhoodPurity,
+    cellTargetCount,
+    neighborhoodTargetCount,
+    cellTargetAvg: Number(cellTargetStats?.avg),
+    cellTargetMin: Number(cellTargetStats?.min),
+    cellTargetMax: Number(cellTargetStats?.max),
+    neighborhoodTargetAvg,
+    detail: `target purity ${formatPercent(cellPurity)} / neighborhood ${formatPercent(neighborhoodPurity)}`,
   };
 }
 
@@ -2813,29 +3685,35 @@ function renderSomRepresentativeDetails(selection, metricKey, metric) {
   if (!somDetails || !selection) return;
   const result = selection.resultScore || {};
   const isCategory = metric?.type === "category";
-  const resultLine = isCategory
-    ? `${displayCategory(result.cellCategory || "-")} / komşuluk ${displayCategory(result.neighborhoodCategory || "-")}`
-    : `${formatMetricValue(result.cellValue, metric)} / komşuluk ${formatMetricValue(result.neighborhoodValue, metric)}`;
+  const resultLine = selection.targetLabel
+    ? `${formatMetricValue(result.cellTargetAvg, metric)} / target ${escapeHtml(selection.targetLabel)} / neighborhood ${formatMetricValue(result.neighborhoodTargetAvg, metric)}`
+    : isCategory
+      ? `${displayCategory(result.cellCategory || "-")} / neighborhood ${displayCategory(result.neighborhoodCategory || "-")}`
+      : `${formatMetricValue(result.cellValue, metric)} / neighborhood ${formatMetricValue(result.neighborhoodValue, metric)}`;
   const neighborText = selection.neighbors
     .filter((cell) => somCellKey(cell) !== selection.representativeKey)
     .map((cell) => `(${cell.x},${cell.y})`)
     .join(", ") || "-";
   somDetails.innerHTML = `
     <div class="som-detail-grid">
-      <div><span>Temsilci hücre</span><b>${escapeHtml(selection.cell.x)}, ${escapeHtml(selection.cell.y)}</b></div>
-      <div><span>Yansıtılan sonuç</span><b>${escapeHtml(selection.metricLabel)}</b></div>
-      <div><span>Temsil skoru</span><b>${formatNumber(selection.score)}</b></div>
-      <div><span>Dolu hücre ort. kayıt</span><b>${formatNumber(selection.averageHitCount)}</b></div>
-      <div><span>Temsilci kayıt</span><b>${escapeHtml(selection.cell.hit_count || 0)}</b></div>
-      <div><span>Komşuluk kayıt</span><b>${escapeHtml(selection.neighborhoodHitCount || 0)}</b></div>
-      <div><span>Sonuç / komşuluk</span><b>${resultLine}</b></div>
-      <div><span>Sonuç yakınlığı</span><b>${formatNumber(result.proximity)}</b><small>${escapeHtml(result.detail || "")}</small></div>
-      <div><span>Yoğunluk skoru</span><b>${formatNumber(selection.densityScore)}</b></div>
+      <div><span>Representative cell</span><b>${escapeHtml(selection.cell.x)}, ${escapeHtml(selection.cell.y)}</b></div>
+      <div><span>Projected result</span><b>${escapeHtml(selection.metricLabel)}</b></div>
+      ${selection.targetLabel ? `<div><span>Selected class / interval</span><b>${escapeHtml(selection.targetLabel)}</b></div>` : ""}
+      <div><span>Representative score</span><b>${formatNumber(selection.score)}</b></div>
+      <div><span>Avg. occupied-cell records</span><b>${formatNumber(selection.averageHitCount)}</b></div>
+      <div><span>Representative records</span><b>${escapeHtml(selection.cell.hit_count || 0)}</b></div>
+      ${selection.cellTargetCount !== undefined ? `<div><span>Target records</span><b>${escapeHtml(selection.cellTargetCount || 0)}</b></div>` : ""}
+      <div><span>${selection.targetLabel ? "Neighborhood target records" : "Neighborhood records"}</span><b>${escapeHtml(selection.neighborhoodHitCount || 0)}</b></div>
+      <div><span>Result / neighborhood</span><b>${resultLine}</b></div>
+      <div><span>Result proximity</span><b>${formatNumber(result.proximity)}</b><small>${escapeHtml(result.detail || "")}</small></div>
+      <div><span>Density score</span><b>${formatNumber(selection.densityScore)}</b></div>
     </div>
     <div class="muted-box">
-      <b>Temsilci seçim stratejisi</b>
-      <p>Dolu hücrelerin ortalama kayıt sayısı altında kalan hücreler elendi. Kalan hücrelerde, seçili sonuç değerinin komşuluk bölgesinin kayıt ağırlıklı sonucuna yakınlığı ve hücre+komşuluk kayıt yoğunluğu birlikte puanlandı.</p>
-      <p><b>Gösterilen komşular:</b> ${escapeHtml(neighborText)}</p>
+      <b>Representative selection strategy</b>
+      <p>${selection.targetLabel
+        ? "The selected Class / interval to inspect is used. Cells without records from the selected target are filtered out; target purity, neighborhood target purity, and target-record density are scored together."
+        : "Cells below the average hit count of occupied cells are filtered out. For the remaining cells, result proximity to the record-weighted neighborhood and cell+neighborhood density are scored together."}</p>
+      <p><b>Displayed neighbors:</b> ${escapeHtml(neighborText)}</p>
     </div>
   `;
 }
@@ -2873,9 +3751,12 @@ function somCellMarkup(cell, index, mode, metricKey, metric, min, max, uValues, 
     sub = hitCount ? `${summary.dominant_count || 0}/${hitCount} kayıt` : "";
     color = categoryColor(category);
   } else {
-    const value = Number(somMetricSummary(cell, metricKey).avg);
+    const targetStats = representativeView?.targetCellValueStats?.get?.(cellKey);
+    const value = Number(targetStats?.avg ?? somMetricSummary(cell, metricKey).avg);
     label = Number.isFinite(value) ? formatMetricValue(value, metric) : "-";
-    sub = hitCount ? `${hitCount} kayıt` : "";
+    sub = representativeView?.targetLabel && Number(targetStats?.count || 0) > 0
+      ? `${targetStats.count}/${hitCount} target`
+      : hitCount ? `${hitCount} kayıt` : "";
     color = Number.isFinite(value) ? numericColor(value, min, max, "#eef7f4", "#0f766e") : "#f8fafc";
   }
   const title = `(${cell.x},${cell.y}) / ${hitCount} kayıt`;
@@ -3102,9 +3983,11 @@ function hexToRgb(hex) {
   return [0, 2, 4].map((index) => parseInt(clean.slice(index, index + 2), 16));
 }
 
-function renderCharts(models = latestModelResults) {
+function renderCharts(models = null) {
   if (!chartCanvas || !chartSummary) return;
-  const rows = chartRowsFromModels(models || []);
+  const currentOutputDir = form.elements.output_dir?.value || "";
+  const sourceModels = models || ((latestChartResults.length && chartsLoadedForOutputDir === currentOutputDir) ? latestChartResults : latestModelResults);
+  const rows = chartRowsFromModels(sourceModels || []);
   if (!rows.length) {
     chartSummary.innerHTML = "";
     chartCanvas.innerHTML = `<div class="muted-box">Grafik için henüz model sonucu yok.</div>`;
@@ -3716,6 +4599,9 @@ async function postJson(url, payload, timeoutMs = 30000) {
     if (error.name === "AbortError" || String(error.message || "").toLowerCase().includes("aborted")) {
       throw new Error(`İstek zaman aşımına uğradı (${Math.round(timeoutMs / 1000)} sn). SOM için grid/iterasyon değerini düşürebilir veya tekrar deneyebilirsin.`);
     }
+    if (String(error.message || "").toLowerCase().includes("failed to fetch")) {
+      throw new Error("Dashboard server'a ulaşılamadı. Server kapalı olabilir veya uzun SOM optimizasyonu sırasında bağlantı kopmuş olabilir. Sayfayı yenileyip tekrar dene; devam ederse grid/iterasyon aralığını küçült.");
+    }
     throw error;
   } finally {
     if (timer) window.clearTimeout(timer);
@@ -3744,6 +4630,7 @@ function escapeHtml(value) {
   })[char]);
 }
 
+installDashboardTranslation();
 init();
 
 

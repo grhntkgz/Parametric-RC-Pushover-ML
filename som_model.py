@@ -30,15 +30,22 @@ X_COLUMNS: dict[str, dict[str, Any]] = {
     "story_count": {"label": "Kat sayısı", "kind": "numeric"},
     "bay_count": {"label": "Açıklık sayısı", "kind": "numeric"},
     "avg_span": {"label": "Açıklık mesafesi", "kind": "numeric"},
+    "max_span": {"label": "Maximum span in analysis direction", "kind": "numeric"},
     "story_height": {"label": "Kat yüksekliği", "kind": "numeric"},
     "total_height": {"label": "Yapı yüksekliği", "kind": "numeric"},
+    "target_displacement": {"label": "Target roof displacement", "kind": "numeric"},
+    "plan_area": {"label": "Plan area", "kind": "numeric"},
+    "plan_aspect_ratio": {"label": "Plan aspect ratio", "kind": "numeric"},
     "column_width": {"label": "Kolon genişliği", "kind": "numeric"},
     "column_depth": {"label": "Kolon yüksekliği", "kind": "numeric"},
     "column_area": {"label": "Kolon alanı", "kind": "numeric"},
     "beam_width": {"label": "Kiriş genişliği", "kind": "numeric"},
     "beam_depth": {"label": "Kiriş yüksekliği", "kind": "numeric"},
     "beam_area": {"label": "Kiriş alanı", "kind": "numeric"},
+    "column_beam_area_ratio": {"label": "Column/beam area ratio", "kind": "numeric"},
+    "column_beam_depth_ratio": {"label": "Column/beam depth ratio", "kind": "numeric"},
     "column_beam_stiffness_ratio": {"label": "Kolon/kiriş rijitlik oranı", "kind": "numeric"},
+    "span_depth_ratio": {"label": "Span/beam depth ratio", "kind": "numeric"},
     "concrete_class": {"label": "Beton sınıfı", "kind": "ordinal", "mapping": "concrete"},
     "steel_class": {"label": "Çelik sınıfı", "kind": "ordinal", "mapping": "steel"},
     "rho_col": {"label": "Kolon donatı oranı", "kind": "numeric"},
@@ -55,6 +62,8 @@ X_COLUMNS: dict[str, dict[str, Any]] = {
     "has_shear_walls": {"label": "Perde var/yok", "kind": "nominal"},
     "wall_count": {"label": "Perde sayısı", "kind": "numeric"},
     "wall_area": {"label": "Perde alanı", "kind": "numeric"},
+    "wall_area_ratio": {"label": "Wall area / plan area", "kind": "numeric"},
+    "wall_count_per_plan_area": {"label": "Wall count / plan area", "kind": "numeric"},
     "wall_thickness": {"label": "Perde kalınlığı", "kind": "numeric"},
     "wall_length": {"label": "Perde uzunluğu", "kind": "numeric"},
     "wall_rebar_ratio": {"label": "Perde donatı oranı", "kind": "numeric"},
@@ -64,10 +73,15 @@ DEFAULT_X_COLUMNS = (
     "story_count",
     "bay_count",
     "avg_span",
+    "max_span",
     "total_height",
+    "target_displacement",
+    "plan_aspect_ratio",
     "column_area",
+    "column_beam_area_ratio",
     "beam_depth",
     "column_beam_stiffness_ratio",
+    "span_depth_ratio",
     "concrete_class",
     "steel_class",
     "rho_col",
@@ -83,6 +97,7 @@ DEFAULT_X_COLUMNS = (
     "target_drift",
     "has_shear_walls",
     "wall_area",
+    "wall_area_ratio",
 )
 
 RESULT_METRICS: dict[str, dict[str, Any]] = {
@@ -149,6 +164,37 @@ REMOVED_X_COLUMNS = {
     "design_base_shear_ratio_proxy",
     "total_mass_proxy",
 }
+
+PARAMETER_SIGNATURE_KEYS = (
+    "story_count",
+    "x_bay_count",
+    "y_bay_count",
+    "spans_x",
+    "spans_y",
+    "story_height",
+    "concrete_class",
+    "steel_class",
+    "column_section",
+    "beam_section",
+    "rho_col",
+    "beam_top_ratio_support",
+    "beam_bottom_ratio_span",
+    "pushover_target_drift_ratio",
+    "soil_class",
+    "subgrade_modulus_kn_m3",
+    "raft_thickness_m",
+    "raft_rebar_ratio",
+    "slab_thickness_m",
+    "slab_rebar_ratio",
+    "has_shear_walls",
+    "wall_thickness_m",
+    "wall_length_m",
+    "wall_rebar_ratio",
+    "wall_placement",
+    "wall_count",
+    "wall_count_x",
+    "wall_count_y",
+)
 
 
 def train_som(
@@ -220,6 +266,63 @@ def train_som(
     return payload
 
 
+def train_som_loaded_rows(
+    rows: list[dict[str, Any]],
+    output_dir: Path,
+    width: int,
+    height: int,
+    iterations: int,
+    selected_y_column: str,
+    random_seed: int,
+    selected_x: list[str],
+) -> dict[str, Any]:
+    """Train a SOM from rows that have already been read from disk."""
+    som_input = [{key: row.get(key) for key in selected_x} for row in rows]
+    y_values = [row.get(selected_y_column) for row in rows]
+    x_scaled, feature_spec = preprocess_som_input(som_input, selected_x)
+    weights = train_som_weights(x_scaled, width, height, iterations, random_seed)
+    assignments = assign_bmu(weights, x_scaled, width)
+    cells = summarize_cells(rows, assignments, y_values, selected_y_column, selected_x, width, height)
+    attach_distinctive_features(cells, rows, selected_x)
+
+    quantization_error = calculate_quantization_error(weights, x_scaled)
+    topographic_error = calculate_topographic_error(weights, x_scaled, width)
+    purity = calculate_purity(cells, selected_y_column)
+    u_matrix = compute_u_matrix(weights, width, height)
+    interpretation = som_interpretation(purity)
+
+    return {
+        "available": True,
+        "trained_at": datetime.now().isoformat(timespec="seconds"),
+        "width": width,
+        "height": height,
+        "iterations": iterations,
+        "sample_count": len(rows),
+        "feature_count": len(x_scaled[0]) if x_scaled else 0,
+        "selected_x_columns": selected_x,
+        "selected_x_labels": [{"key": key, "label": X_COLUMNS[key]["label"]} for key in selected_x],
+        "selected_y_column": selected_y_column,
+        "result_metric": selected_y_column,
+        "result_metric_meta": RESULT_METRICS[selected_y_column],
+        "excluded_y_columns": list(RESULT_METRICS),
+        "target_leakage_warning": TARGET_LEAKAGE_MESSAGE,
+        "training_note": "SOM modeli yalnÄ±zca seÃ§ilen X parametreleriyle eÄŸitilir. SeÃ§ilen Y sonucu eÄŸitimde kullanÄ±lmaz; yalnÄ±zca harita hÃ¼crelerinin mÃ¼hendislik yorumunu yapmak iÃ§in sonradan renklendirilir. BÃ¶ylece modelin hasar sonucunu ezberlemesi engellenir.",
+        "source_note": "SOM yalnÄ±zca X parametreleriyle eÄŸitilir; seÃ§ilen Y sonucu harita hÃ¼crelerini yorumlamak iÃ§in sonradan renklendirilir.",
+        "engineering_question": "Benzer yapÄ±sal/tasarÄ±m parametrelerine sahip modeller, pushover sonucunda benzer kritik hasar seviyelerine mi ulaÅŸÄ±yor?",
+        "quantization_error": round(quantization_error, 5),
+        "topographic_error": round(topographic_error, 5),
+        "purity": None if purity is None else round(purity, 5),
+        "interpretation": interpretation,
+        "feature_spec": feature_spec,
+        "x_columns": X_COLUMNS,
+        "result_metrics": RESULT_METRICS,
+        "cells": cells,
+        "u_matrix": u_matrix,
+        "assignments": assignments[:1000],
+        "analysis_rows": build_analysis_rows(rows, bmu_assignments=assignments, selected_x_columns=selected_x),
+    }
+
+
 def build_analysis_rows(
     rows: list[dict[str, Any]],
     bmu_assignments: list[dict[str, Any]],
@@ -263,17 +366,24 @@ def optimize_som_grid(
     if start_size > max_size:
         raise ValueError("Min grid, maks grid değerinden büyük olamaz.")
     iterations = max(50, min(int(iterations), 20_000))
+    selected_y_column = normalize_y_column(result_metric)
+    selected_x = validate_selected_columns(selected_x_columns or list(DEFAULT_X_COLUMNS), selected_y_column)
+    rows = build_som_rows(output_dir)
+    if len(rows) < 4:
+        raise ValueError("SOM icin en az 4 yon-sonucu gerekir.")
+
     candidates: list[dict[str, Any]] = []
     results_by_size: dict[tuple[int, int], dict[str, Any]] = {}
     for size in range(start_size, max_size + 1):
-        result = train_som(
+        result = train_som_loaded_rows(
+            rows,
             output_dir,
             size,
             size,
             iterations,
-            result_metric,
+            selected_y_column,
             random_seed,
-            selected_x_columns,
+            selected_x,
         )
         results_by_size[(size, size)] = result
         candidates.append(
@@ -705,6 +815,7 @@ def distinctive_features(feature_means: dict[str, Any], global_stats: dict[str, 
 def build_som_rows(output_dir: Path) -> list[dict[str, Any]]:
     """Build one SOM row per model and pushover direction from metadata JSON files."""
     rows: list[dict[str, Any]] = []
+    seen_signatures: set[str] = set()
     for path in sorted(output_dir.rglob("*_metadata.json")):
         if any(part in {"ml_snapshots", "hinge_validation"} for part in path.parts):
             continue
@@ -725,7 +836,13 @@ def build_som_rows(output_dir: Path) -> list[dict[str, Any]]:
         directions = pushover.get("directions") if isinstance(pushover.get("directions"), list) else ["X", "Y"]
         for direction in directions:
             direction = str(direction).upper()
+            dedup_signature = parameter_direction_signature(candidate, direction)
+            if dedup_signature in seen_signatures:
+                continue
+            seen_signatures.add(dedup_signature)
             row = base_feature_row(data, candidate, direction)
+            row["_dedup_signature"] = dedup_signature
+            row["_source_metadata"] = str(path)
             curve = curves.get(direction, {}) if isinstance(curves.get(direction), dict) else {}
             summary = summaries.get(direction, {}) if isinstance(summaries.get(direction), dict) else {}
             drift = story_drift_for_direction(story_drifts, direction)
@@ -777,6 +894,29 @@ def build_som_rows(output_dir: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def parameter_direction_signature(candidate: dict[str, Any], direction: str) -> str:
+    """Return a stable signature for one unique parameter combination and direction."""
+    payload = {
+        "direction": str(direction or "").upper(),
+        "parameters": {key: normalize_signature_value(candidate.get(key)) for key in PARAMETER_SIGNATURE_KEYS},
+    }
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return raw
+
+
+def normalize_signature_value(value: Any) -> Any:
+    """Normalize nested metadata values before de-duplication."""
+    if isinstance(value, float):
+        return round(value, 6)
+    if isinstance(value, list):
+        return [normalize_signature_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [normalize_signature_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): normalize_signature_value(value[key]) for key in sorted(value)}
+    return value
+
+
 def base_feature_row(data: dict[str, Any], candidate: dict[str, Any], direction: str) -> dict[str, Any]:
     """Extract pre-analysis X parameters for one model direction."""
     spans_x = [float(value) for value in candidate.get("spans_x", []) if is_number(value)]
@@ -795,13 +935,19 @@ def base_feature_row(data: dict[str, Any], candidate: dict[str, Any], direction:
     column_i = column_width * column_depth**3 / 12.0 if column_width and column_depth else 0.0
     beam_i = beam_width * beam_depth**3 / 12.0 if beam_width and beam_depth else 0.0
     plan_area = (sum(spans_x) if spans_x else 0.0) * (sum(spans_y) if spans_y else 0.0)
+    plan_x = sum(spans_x) if spans_x else 0.0
+    plan_y = sum(spans_y) if spans_y else 0.0
     total_mass_proxy = plan_area * max(story_count, 1.0)
     direction_key = str(direction or "").upper()
     direction_spans = spans_y if direction_key == "Y" else spans_x
     direction_bay_count = to_float(candidate.get("y_bay_count" if direction_key == "Y" else "x_bay_count")) or 0.0
+    avg_span = sum(direction_spans) / len(direction_spans) if direction_spans else 0.0
+    max_span = max(direction_spans) if direction_spans else 0.0
     wall_count = to_float(candidate.get("wall_count")) or 0.0
     wall_thickness = to_float(candidate.get("wall_thickness_m")) or 0.0
     wall_length = to_float(candidate.get("wall_length_m")) or 0.0
+    wall_area = wall_count * wall_thickness * wall_length
+    target_drift = to_float(candidate.get("pushover_target_drift_ratio")) or 0.0
     return {
         "model_name": Path(str(data.get("model_path") or "")).stem or "model",
         "direction": direction,
@@ -809,20 +955,27 @@ def base_feature_row(data: dict[str, Any], candidate: dict[str, Any], direction:
         "bay_count": direction_bay_count,
         "x_bay_count": to_float(candidate.get("x_bay_count")),
         "y_bay_count": to_float(candidate.get("y_bay_count")),
-        "avg_span": sum(direction_spans) / len(direction_spans) if direction_spans else 0.0,
+        "avg_span": avg_span,
+        "max_span": max_span,
         "avg_span_x": sum(spans_x) / len(spans_x) if spans_x else 0.0,
         "avg_span_y": sum(spans_y) / len(spans_y) if spans_y else 0.0,
         "max_span_x": max(spans_x) if spans_x else 0.0,
         "max_span_y": max(spans_y) if spans_y else 0.0,
         "story_height": story_height,
         "total_height": total_height,
+        "target_displacement": target_drift * total_height,
+        "plan_area": plan_area,
+        "plan_aspect_ratio": safe_ratio(max(plan_x, plan_y), max(min(plan_x, plan_y), 1e-9)),
         "column_width": column_width,
         "column_depth": column_depth,
         "column_area": column_width * column_depth,
         "beam_width": beam_width,
         "beam_depth": beam_depth,
         "beam_area": beam_width * beam_depth,
+        "column_beam_area_ratio": safe_ratio(column_width * column_depth, beam_width * beam_depth),
+        "column_beam_depth_ratio": safe_ratio(column_depth, beam_depth),
         "column_beam_stiffness_ratio": safe_ratio(column_i, beam_i),
+        "span_depth_ratio": safe_ratio(avg_span, beam_depth),
         "concrete_class": concrete_class,
         "steel_class": steel_class,
         "rho_col": to_float(candidate.get("rho_col")),
@@ -835,10 +988,12 @@ def base_feature_row(data: dict[str, Any], candidate: dict[str, Any], direction:
         "subgrade_modulus": to_float(candidate.get("subgrade_modulus_kn_m3")),
         "raft_thickness": to_float(candidate.get("raft_thickness_m")),
         "raft_rebar_ratio": to_float(candidate.get("raft_rebar_ratio")),
-        "target_drift": to_float(candidate.get("pushover_target_drift_ratio")),
+        "target_drift": target_drift,
         "has_shear_walls": "yes" if bool(candidate.get("has_shear_walls")) else "no",
         "wall_count": wall_count,
-        "wall_area": wall_count * wall_thickness * wall_length,
+        "wall_area": wall_area,
+        "wall_area_ratio": safe_ratio(wall_area, plan_area),
+        "wall_count_per_plan_area": safe_ratio(wall_count, plan_area),
         "wall_thickness": wall_thickness,
         "wall_length": wall_length,
         "wall_rebar_ratio": to_float(candidate.get("wall_rebar_ratio")) or 0.0,

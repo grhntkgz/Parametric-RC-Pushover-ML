@@ -20,6 +20,7 @@ sap2000_generated_models/
 *.OUT
 *.out
 *.log
+*.LOG
 fort.*
 
 # Generated metadata, previews, and analysis exports
@@ -35,6 +36,11 @@ ml_training_cache.jsonl
 ml_snapshots/
 *.joblib
 som_model.json
+behavior_ml_current_results*.json
+
+# Local manuscript/review artifacts
+*.docx
+render_review/
 
 # OS/editor noise
 Thumbs.db
@@ -42,3 +48,11 @@ desktop.ini
 .DS_Store
 .vscode/
 .idea/
+
+# Keep the reduced GitHub demonstration dataset.
+!examples/
+!examples/**
+!examples/sample_metadata/*.json
+!examples/sample_previews/*.svg
+!examples/sample_logs/*.log
+examples/sample_logs/Model_*.LOG

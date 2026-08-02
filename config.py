@@ -35,7 +35,7 @@ class GeneratorConfig:
     n_iter: int = 5
     random_seed: Optional[int] = 42
     max_attempts_per_model: int = 100
-    output_dir: Path = Path(r"D:\sap2000_generated_models")
+    output_dir: Path = Path(r"E:\sap2000_generated_models")
     sap2000_exe_path: Path = Path(r"C:\Program Files\Computers and Structures\SAP2000 22\SAP2000.exe")
     keep_sap_open: bool = False
 

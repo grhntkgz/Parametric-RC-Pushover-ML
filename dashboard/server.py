@@ -9,6 +9,7 @@ import subprocess
 import threading
 import traceback
 import csv
+import gzip
 from dataclasses import asdict, fields, replace
 from datetime import datetime
 from http import HTTPStatus
@@ -24,6 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import CONFIG, GeneratorConfig, Section  # noqa: E402
+from behavior_ml import behavior_ml_metadata, run_behavior_ml_analysis  # noqa: E402
 from design_rules import validate_candidate_model  # noqa: E402
 from fema440 import calculate_fema440_by_direction  # noqa: E402
 from ml_model import ml_status, predict_ml, reset_ml_model, save_ml_snapshot, train_ml_model  # noqa: E402
@@ -328,7 +330,7 @@ def clear_artifacts(output_dir: Path) -> dict[str, Any]:
     return {"deleted_count": len(deleted), "deleted": deleted, "preserved_ml": preserved, "output_dir": str(target)}
 
 
-def artifact_inventory(output_dir: Path, offset: int = 0, limit: int = 50, search: str = "", run_id: str = "") -> dict[str, Any]:
+def artifact_inventory(output_dir: Path, offset: int = 0, limit: int = 50, search: str = "", run_id: str = "", mode: str = "recent") -> dict[str, Any]:
     """Return generated model artifacts, including models without exact export."""
     target = output_dir.resolve()
     target.mkdir(parents=True, exist_ok=True)
@@ -336,54 +338,44 @@ def artifact_inventory(output_dir: Path, offset: int = 0, limit: int = 50, searc
     limit = max(1, min(int(limit or 50), 500))
     search_text = str(search or "").strip().lower()
     run_filter = str(run_id or "").strip()
+    show_all = str(mode or "recent").strip().lower() == "all"
     with STATE.lock:
         running = STATE.running
-    for root in _output_scan_roots(target):
-        _ensure_exact_metadata_refresh(root)
-    files: list[dict[str, Any]] = []
-    for item in sorted(_iter_artifact_files(target), key=lambda path: path.stat().st_mtime, reverse=True):
-        stat = item.stat()
-        rel_name = item.relative_to(target).as_posix()
-        files.append(
-            {
-                "name": rel_name,
-                "basename": item.name,
-                "model_name": item.name.replace("_preview.svg", "") if item.name.endswith("_preview.svg") else item.stem,
-                "run_id": item.parent.name if item.parent != target else "root",
-                "path": str(item),
-                "kind": artifact_kind(item),
-                "is_preview": item.name.endswith("_preview.svg"),
-                "is_sap_screenshot": "_sap_" in item.name and item.suffix.lower() == ".png",
-                "size_kb": round(stat.st_size / 1024.0, 1),
-                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
-            }
-        )
-    previews = [file for file in files if file["is_preview"] and _preview_has_completed_metadata(Path(str(file["path"])))]
-    runs = sorted({file["run_id"] for file in previews}, reverse=True)
+    preview_paths: list[Path] = []
+    roots = sorted(_output_scan_roots(target), key=lambda path: path.name, reverse=True)
+    for root in roots:
+        if root.exists():
+            preview_paths.extend(root.glob("*_preview.svg"))
+    preview_paths.sort(key=lambda path: (path.parent.name, path.name), reverse=True)
+    runs = sorted({path.parent.name if path.parent != target else "root" for path in preview_paths}, reverse=True)
     if run_filter:
-        previews = [file for file in previews if file["run_id"] == run_filter]
+        preview_paths = [path for path in preview_paths if (path.parent.name if path.parent != target else "root") == run_filter]
     if search_text:
-        previews = [
-            file
-            for file in previews
-            if search_text in str(file.get("name", "")).lower()
-            or search_text in str(file.get("model_name", "")).lower()
-            or search_text in str(file.get("basename", "")).lower()
+        preview_paths = [
+            path
+            for path in preview_paths
+            if search_text in path.relative_to(target).as_posix().lower()
+            or search_text in path.name.lower()
+            or search_text in path.name.replace("_preview.svg", "").lower()
         ]
-    page = previews[offset : offset + limit]
+    if not show_all and not run_filter and not search_text:
+        preview_paths = preview_paths[:100]
+    total_previews = len(preview_paths)
+    page_paths = preview_paths[offset : offset + limit]
+    page = [_artifact_file_record(path, target) for path in page_paths]
     return {
         "output_dir": str(target),
-        "sdb_count": sum(1 for file in files if file["kind"] == "SAP2000"),
-        "json_count": sum(1 for file in files if file["kind"] == "JSON"),
-        "csv_count": sum(1 for file in files if file["kind"] == "CSV"),
-        "preview_count": len(previews),
-        "preview_total_count": len(previews),
+        "sdb_count": 0,
+        "json_count": 0,
+        "csv_count": 0,
+        "preview_count": total_previews,
+        "preview_total_count": total_previews,
         "preview_offset": offset,
         "preview_limit": limit,
-        "preview_has_more": offset + limit < len(previews),
+        "preview_has_more": offset + limit < total_previews,
         "preview_runs": runs,
         "previews": page,
-        "files": files[:100],
+        "files": page,
         "message": (
             "Uretim devam ediyor; tamamlanan model temsili gorselleri listeleniyor."
             if running and page
@@ -391,6 +383,24 @@ def artifact_inventory(output_dir: Path, offset: int = 0, limit: int = 50, searc
             else "Henuz listelenecek model temsili gorseli yok."
         ),
 }
+
+
+def _artifact_file_record(item: Path, target: Path) -> dict[str, Any]:
+    """Return a JSON-safe artifact record for a file."""
+    stat = item.stat()
+    rel_name = item.relative_to(target).as_posix()
+    return {
+        "name": rel_name,
+        "basename": item.name,
+        "model_name": item.name.replace("_preview.svg", "") if item.name.endswith("_preview.svg") else item.stem,
+        "run_id": item.parent.name if item.parent != target else "root",
+        "path": str(item),
+        "kind": artifact_kind(item),
+        "is_preview": item.name.endswith("_preview.svg"),
+        "is_sap_screenshot": "_sap_" in item.name and item.suffix.lower() == ".png",
+        "size_kb": round(stat.st_size / 1024.0, 1),
+        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+    }
 
 
 def _preview_has_completed_metadata(preview_path: Path) -> bool:
@@ -412,6 +422,21 @@ def _preview_has_completed_metadata(preview_path: Path) -> bool:
     results = plastic.get("results", {}) if isinstance(plastic.get("results"), dict) else {}
     summaries = results.get("summary_by_direction", {}) if isinstance(results, dict) else {}
     return bool(candidate and summaries)
+
+
+def _preview_has_metadata_file(preview_path: Path) -> bool:
+    """Return true when a preview has a matching per-model metadata file.
+
+    The gallery can contain thousands of previews. Reading every JSON file on
+    each refresh makes the dashboard feel empty because the request blocks for
+    too long, especially on external drives. Detailed completion/result checks
+    are still performed by the results inventory; the preview gallery only
+    needs a quick existence check for pagination and display.
+    """
+    if not preview_path.name.endswith("_preview.svg"):
+        return False
+    metadata_path = preview_path.with_name(preview_path.name.replace("_preview.svg", "_metadata.json"))
+    return metadata_path.exists()
 
 
 def model_results_inventory(output_dir: Path) -> dict[str, Any]:
@@ -516,6 +541,8 @@ def model_results_inventory(output_dir: Path) -> dict[str, Any]:
     return {
         "output_dir": str(target),
         "models": models[:500],
+        "model_count": len(models),
+        "returned_model_count": min(len(models), 500),
         "message": (
             "Uretim devam ediyor; tamamlanan model sonuclari listeleniyor."
             if running and models
@@ -523,6 +550,120 @@ def model_results_inventory(output_dir: Path) -> dict[str, Any]:
             else "Henuz listelenecek model sonucu yok."
         ),
     }
+
+
+def chart_results_inventory(output_dir: Path) -> dict[str, Any]:
+    """Return lightweight per-model data for charts across all run folders."""
+    target = output_dir.resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    models: list[dict[str, Any]] = []
+    for item in sorted(_iter_metadata_files(target), key=lambda path: path.stat().st_mtime, reverse=True):
+        try:
+            data = json.loads(item.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        model_path = Path(str(data.get("model_path", "")))
+        name = model_path.stem or item.stem.replace("_metadata", "")
+        pushover = data.get("pushover", {}) if isinstance(data.get("pushover"), dict) else {}
+        plastic = data.get("plastic_hinges", {}) if isinstance(data.get("plastic_hinges"), dict) else {}
+        results = pushover.get("results", {}) if isinstance(pushover.get("results"), dict) else {}
+        curves = results.get("curves", {}) if isinstance(results.get("curves"), dict) else {}
+        story_drifts = results.get("story_drifts", {}) if isinstance(results.get("story_drifts"), dict) else {}
+        if not story_drifts and isinstance(data.get("candidate"), dict):
+            story_drifts = data["candidate"].get("story_drift_results", {}) if isinstance(data["candidate"].get("story_drift_results"), dict) else {}
+        compact_curves: dict[str, Any] = {}
+        for direction, curve in curves.items():
+            if not isinstance(curve, dict):
+                continue
+            compact_curves[direction] = {
+                "available": bool(curve.get("available")),
+                "point_count": curve.get("point_count"),
+                "peak_base_shear_kn": curve.get("peak_base_shear_kn"),
+                "final_control_displacement_m": curve.get("final_control_displacement_m"),
+                "final_base_shear_kn": curve.get("final_base_shear_kn"),
+            }
+        candidate = data.get("candidate", {}) if isinstance(data.get("candidate"), dict) else {}
+        hinge_results = plastic.get("results", {}) if isinstance(plastic.get("results"), dict) else {}
+        hinge_summary = _slim_hinge_summary_by_direction(
+            hinge_results.get("summary_by_direction", {}) if isinstance(hinge_results.get("summary_by_direction"), dict) else {}
+        )
+        slim_story_drifts = _slim_story_drifts(story_drifts)
+        model_record = {
+            "name": name,
+            "metadata_file": item.relative_to(target).as_posix(),
+            "run_id": item.parent.name if item.parent != target else "root",
+            "story_count": candidate.get("story_count"),
+            "x_bay_count": candidate.get("x_bay_count"),
+            "y_bay_count": candidate.get("y_bay_count"),
+            "spans_x": candidate.get("spans_x", []),
+            "spans_y": candidate.get("spans_y", []),
+            "story_height": candidate.get("story_height"),
+            "raft_thickness_m": candidate.get("raft_thickness_m"),
+            "raft_rebar_ratio": candidate.get("raft_rebar_ratio"),
+            "slab_thickness_m": candidate.get("slab_thickness_m"),
+            "slab_rebar_ratio": candidate.get("slab_rebar_ratio"),
+            "target_drift_ratio": pushover.get("target_drift_ratio"),
+            "target_displacement_m": pushover.get("target_displacement_m"),
+            "hinge_summary": hinge_summary,
+            "curves": compact_curves,
+            "story_drifts": slim_story_drifts,
+        }
+        model_record["fema440"] = calculate_fema440_by_direction(model_record)
+        models.append(model_record)
+    return {
+        "output_dir": str(target),
+        "models": models,
+        "model_count": len(models),
+        "message": "" if models else "Henuz grafik icin model sonucu yok.",
+    }
+
+
+def _slim_story_drifts(story_drifts: object) -> dict[str, Any]:
+    """Keep only chart-required story drift summary fields."""
+    if not isinstance(story_drifts, dict):
+        return {}
+    by_direction = story_drifts.get("by_direction", {})
+    if not isinstance(by_direction, dict):
+        return {}
+    slim_by_direction: dict[str, Any] = {}
+    for direction, summary in by_direction.items():
+        if not isinstance(summary, dict):
+            continue
+        slim_by_direction[direction] = {"max_drift": summary.get("max_drift")}
+    return {"by_direction": slim_by_direction}
+
+
+def _slim_hinge_summary_by_direction(summary_by_direction: dict[str, Any]) -> dict[str, Any]:
+    """Keep only chart-required hinge summary fields."""
+    slim: dict[str, Any] = {}
+    for direction, summary in summary_by_direction.items():
+        if not isinstance(summary, dict):
+            continue
+        critical_events = summary.get("critical_events", [])
+        critical_event = critical_events[0] if isinstance(critical_events, list) and critical_events else {}
+        slim[direction] = {
+            "state_counts": summary.get("state_counts", {}),
+            "first_plastic_hinge": _slim_hinge_event(summary.get("first_plastic_hinge")),
+            "first_column_hinge": _slim_hinge_event(summary.get("first_column_hinge")),
+            "first_ls_level": _slim_hinge_event(summary.get("first_ls_level")),
+            "first_cp_level": _slim_hinge_event(summary.get("first_cp_level")),
+            "critical_events": [_slim_hinge_event(critical_event)] if isinstance(critical_event, dict) and critical_event else [],
+        }
+    return slim
+
+
+def _slim_hinge_event(event: object) -> dict[str, Any] | None:
+    """Return the hinge event fields needed by charts."""
+    if not isinstance(event, dict):
+        return None
+    keys = (
+        "step_number",
+        "element_name",
+        "element_type",
+        "hinge_state_level",
+        "plastic_rotation_rad",
+    )
+    return {key: event.get(key) for key in keys if key in event}
 
 
 def _output_scan_roots(output_dir: Path) -> list[Path]:
@@ -864,19 +1005,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._send_json(STATE.snapshot())
         elif path == "/api/artifacts":
             query = parse_qs(parsed.query)
+            output_dir = self._query_output_dir(query)
             self._send_json(
                 artifact_inventory(
-                    Path(STATE.output_dir),
+                    output_dir,
                     int(query.get("offset", ["0"])[0] or 0),
                     int(query.get("limit", ["50"])[0] or 50),
                     query.get("search", [""])[0],
                     query.get("run", [""])[0],
+                    query.get("mode", ["recent"])[0],
                 )
             )
         elif path == "/api/model-results":
-            self._send_json(model_results_inventory(Path(STATE.output_dir)))
+            query = parse_qs(parsed.query)
+            self._send_json(model_results_inventory(self._query_output_dir(query)))
+        elif path == "/api/chart-results":
+            query = parse_qs(parsed.query)
+            self._send_json(chart_results_inventory(self._query_output_dir(query)))
         elif path == "/api/ml/status":
             self._send_json(ml_status(Path(STATE.output_dir)))
+        elif path == "/api/behavior-ml/metadata":
+            self._send_json(behavior_ml_metadata())
         elif path == "/api/som/metadata":
             self._send_json(
                 {
@@ -896,6 +1045,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._serve_static(path.removeprefix("/static/"))
         else:
             self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+
+    def _query_output_dir(self, query: dict[str, list[str]]) -> Path:
+        """Return the requested output directory and keep dashboard state aligned."""
+        requested = str(query.get("output_dir", [""])[0] or "").strip()
+        output_dir = Path(requested).expanduser() if requested else Path(STATE.output_dir)
+        with STATE.lock:
+            STATE.output_dir = str(output_dir)
+        return output_dir
 
     def do_POST(self) -> None:
         """Handle preview and generation requests."""
@@ -928,7 +1085,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     str(payload.get("algorithm", "knn")),
                     int(payload.get("random_seed", 42)),
                     preserve_existing,
-                    bool(payload.get("use_som_features", cfg.ml_use_som_features)),
+                    False,
                     payload.get("selected_x_columns") if isinstance(payload.get("selected_x_columns"), list) else None,
                 )
                 self._send_json({"trained": True, "result": ml_status(cfg.output_dir), "train_result": train_result})
@@ -941,6 +1098,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
             elif path == "/api/ml/reset":
                 result = reset_ml_model(cfg.output_dir, str(payload.get("algorithm", "") or ""))
                 self._send_json({"reset": True, "result": result})
+            elif path == "/api/behavior-ml/analyze":
+                result = run_behavior_ml_analysis(
+                    cfg.output_dir,
+                    str(payload.get("group_id", "")),
+                    str(payload.get("target_id", "")),
+                    payload.get("algorithms") if isinstance(payload.get("algorithms"), list) else None,
+                    int(payload.get("random_seed", cfg.ml_random_seed) or cfg.ml_random_seed),
+                )
+                self._send_json({"analyzed": True, "result": result})
             elif path == "/api/som/train":
                 result = train_som(
                     cfg.output_dir,
@@ -988,9 +1154,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def _send_json(self, payload: dict[str, Any], status: HTTPStatus = HTTPStatus.OK) -> None:
         """Send JSON response."""
-        body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+        body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        accepts_gzip = "gzip" in str(self.headers.get("Accept-Encoding", "")).lower()
+        if accepts_gzip and len(body) > 1024:
+            body = gzip.compress(body, compresslevel=1)
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        if accepts_gzip:
+            self.send_header("Content-Encoding", "gzip")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store, max-age=0")
         self.end_headers()

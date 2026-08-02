@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="610" viewBox="0 0 960 610">
+  <style>
+    .bg { fill: #f7f9fb; }
+    .panel { fill: #ffffff; stroke: #d9dee7; stroke-width: 1.4; }
+    .grid { stroke: #176b87; stroke-width: 3; stroke-linecap: round; }
+    .joint { fill: #2d7d46; }
+    .push { stroke: #a44d22; stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .title { font: 700 28px Segoe UI, Arial, sans-serif; fill: #172033; }
+    .label { font: 700 18px Segoe UI, Arial, sans-serif; fill: #172033; }
+    .meta { font: 15px Segoe UI, Arial, sans-serif; fill: #687386; }
+    .badge { fill: #eaf4f6; stroke: #c9e2e8; }
+    .highlight { stroke-width: 8; stroke-linecap: round; fill: none; }
+    .marker { stroke: #ffffff; stroke-width: 3; }
+    .x-critical { stroke: #dc2626; fill: #dc2626; }
+    .x-first { stroke: #f59e0b; fill: #f59e0b; stroke-dasharray: 10 7; }
+    .y-critical { stroke: #2563eb; fill: #2563eb; }
+    .y-first { stroke: #38bdf8; fill: #38bdf8; stroke-dasharray: 10 7; }
+    .legend text { font: 700 19px Segoe UI, Arial, sans-serif; fill: #172033; }
+  </style>
+  <rect width="100%" height="100%" class="bg"/>
+  <text x="52" y="48" class="title">4Story X2 Y4 C25</text>
+  <rect x="52" y="70" width="856" height="420" rx="8" class="panel"/>
+  <text x="52" y="86" class="label">Plan</text>
+  <text x="540" y="86" class="label">Elevasyon</text>
+  <line x1="52.0" y1="96" x2="52.0" y2="416" class="grid"/><line x1="241.5" y1="96" x2="241.5" y2="416" class="grid"/><line x1="412.0" y1="96" x2="412.0" y2="416" class="grid"/><line x1="52" y1="96.0" x2="412" y2="96.0" class="grid"/><line x1="52" y1="169.8" x2="412" y2="169.8" class="grid"/><line x1="52" y1="243.7" x2="412" y2="243.7" class="grid"/><line x1="52" y1="350.4" x2="412" y2="350.4" class="grid"/><line x1="52" y1="416.0" x2="412" y2="416.0" class="grid"/><rect x="48.0" y="92.0" width="8" height="8" class="joint"/><rect x="48.0" y="165.8" width="8" height="8" class="joint"/><rect x="48.0" y="239.7" width="8" height="8" class="joint"/><rect x="48.0" y="346.4" width="8" height="8" class="joint"/><rect x="48.0" y="412.0" width="8" height="8" class="joint"/><rect x="237.5" y="92.0" width="8" height="8" class="joint"/><rect x="237.5" y="165.8" width="8" height="8" class="joint"/><rect x="237.5" y="239.7" width="8" height="8" class="joint"/><rect x="237.5" y="346.4" width="8" height="8" class="joint"/><rect x="237.5" y="412.0" width="8" height="8" class="joint"/><rect x="408.0" y="92.0" width="8" height="8" class="joint"/><rect x="408.0" y="165.8" width="8" height="8" class="joint"/><rect x="408.0" y="239.7" width="8" height="8" class="joint"/><rect x="408.0" y="346.4" width="8" height="8" class="joint"/><rect x="408.0" y="412.0" width="8" height="8" class="joint"/>
+  <line x1="540.0" y1="96" x2="540.0" y2="416" class="grid"/><line x1="705.0" y1="96" x2="705.0" y2="416" class="grid"/><line x1="870.0" y1="96" x2="870.0" y2="416" class="grid"/><line x1="540" y1="416.0" x2="870" y2="416.0" class="grid"/><line x1="540" y1="336.0" x2="870" y2="336.0" class="grid"/><line x1="540" y1="256.0" x2="870" y2="256.0" class="grid"/><line x1="540" y1="176.0" x2="870" y2="176.0" class="grid"/><line x1="540" y1="96.0" x2="870" y2="96.0" class="grid"/>
+  <circle cx="426.0" cy="350.4" r="15" class="marker x-critical"/><line x1="878.0" y1="416.0" x2="878.0" y2="336.0" class="highlight x-critical"/><circle cx="227.5" cy="243.7" r="11" class="marker x-first"/><line x1="705.7" y1="416.0" x2="705.7" y2="336.0" class="highlight x-first"/><circle cx="52.0" cy="257.7" r="15" class="marker y-critical"/><line x1="558.0" y1="416.0" x2="558.0" y2="336.0" class="highlight y-critical"/><circle cx="241.5" cy="336.4" r="11" class="marker y-first"/><line x1="695.7" y1="416.0" x2="695.7" y2="336.0" class="highlight y-first"/>
+  <path d="M 904.0 416.0 L 904.0 150.0 L 892.0 170.0 M 904.0 150.0 L 916.0 170.0" class="push"/>
+  
+  <g class="legend">
+    <line x1="54" y1="518" x2="92" y2="518" class="highlight x-critical"/>
+    <text x="106" y="525">X kritik</text>
+    <line x1="245" y1="518" x2="283" y2="518" class="highlight x-first"/>
+    <text x="297" y="525">X ilk</text>
+    <line x1="430" y1="518" x2="468" y2="518" class="highlight y-critical"/>
+    <text x="482" y="525">Y kritik</text>
+    <line x1="620" y1="518" x2="658" y2="518" class="highlight y-first"/>
+    <text x="672" y="525">Y ilk</text>
+  </g>
+  <rect x="52" y="568" width="856" height="34" rx="6" class="badge"/>
+  <text x="70" y="591" class="meta">
+    4 kat, toplam H=14.00 m | X2 Y4 | C25 | Kolon 40x40 cm | Kiris 25x50 cm | rhoC=0.0100, ust=0.0080, alt=0.0080 | Push=0.060 | Zemin ZE | ks=12000 kN/m3 | Radye=0.50 m rhoR=0.0040 | Doseme=0.18 m rhoS=0.0040
+  </text>
+</svg>
