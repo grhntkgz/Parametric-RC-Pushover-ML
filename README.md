@@ -92,6 +92,17 @@ The `examples/` directory contains a reduced demonstration set:
 
 This sample set is intended for reviewers who want to inspect the dashboard and machine-learning analysis workflow without running SAP2000.
 
+## Screenshots
+
+Selected dashboard screenshots are included for quick review:
+
+- [General settings panel](docs/screenshots/dashboard_settings_panel.png)
+- [Behavior ML analysis panel](docs/screenshots/dashboard_behavior_ml_panel.png)
+- [Machine learning panel](docs/screenshots/dashboard_machine_learning_panel.png)
+- [Charts panel](docs/screenshots/dashboard_charts_panel.png)
+
+Representative model SVG previews are provided in `examples/sample_previews/`.
+
 ## Research Scope
 
 This framework is intended for synthetic parametric analysis and data-supported interpretation of nonlinear behavior trends. It is not a replacement for final reinforced concrete design, detailed code compliance checks, or project-specific engineering verification.
