@@ -49,11 +49,11 @@
 
           <div class="tab-panel" data-panel="geometry">
                <div class="grid three">
-              <label>Kat min
+              <label>Story min
                 <input name="story_count_min" type="number" min="1" step="1">
                 <span class="field-note">Code/pre-screening: TBDY does not limit story count by itself; irregularity and interstory drift checks are evaluated separately. Common range: 4-8 stories for mid-rise synthetic data.</span>
               </label>
-              <label>Kat max
+              <label>Story max
                 <input name="story_count_max" type="number" min="1" step="1">
                 <span class="field-note">Code/pre-screening: As story count increases, second-order effects, slenderness, and drift checks become more critical. Common practice: larger column and beam sections for 6-8 story buildings.</span>
               </label>
@@ -326,7 +326,7 @@
                 <input name="rho_beam_max" type="number" min="0" step="0.001">
                 <span class="field-note">Code/pre-screening: A 0.025 upper preliminary filter is used for beam reinforcement. Common dense upper range: 0.016-0.020.</span>
               </label>
-              <label>Min kolon boyutu m
+              <label>Min column dimension m
                 <input name="min_column_dimension_m" type="number" min="0" step="0.01">
                 <span class="field-note">Code/pre-screening: Columns below 0.30 m are not accepted. Common range: 0.40-0.70 m.</span>
               </label>
@@ -338,7 +338,7 @@
                 <input name="min_beam_depth_m" type="number" min="0" step="0.01">
                 <span class="field-note">Code/pre-screening: Values below 0.50 m are rejected. Common range: 0.50-0.70 m.</span>
               </label>
-              <label>Maks L/h
+              <label>Max L/h
                 <input name="max_span_to_beam_depth_ratio" type="number" min="1" step="0.5">
                 <span class="field-note">Code/pre-screening: L/h is used as a preliminary stiffness/deflection check. Common range: 12-15.</span>
               </label>
@@ -387,24 +387,24 @@
                 <legend>Directions</legend>
                 <div id="pushoverDirections" class="chips"></div>
               </fieldset>
-              <label class="check"><input name="fix_pushover_target_drift_ratio" type="checkbox">Hedef drift sabit
+              <label class="check"><input name="fix_pushover_target_drift_ratio" type="checkbox">Fixed target drift
                 <span class="field-note">If enabled, all models use one fixed target drift and target drift is excluded from the optimization/variable pool.</span>
               </label>
-              <label>Sabit hedef drift<input name="pushover_target_drift_ratio_fixed" type="number" min="0" step="0.001">
+              <label>Fixed target drift<input name="pushover_target_drift_ratio_fixed" type="number" min="0" step="0.001">
                 <span class="field-note">Used when fixed target drift is enabled. Example: 0.04 means a roof displacement target equal to 4% of total building height.</span>
               </label>
-              <label>Hedef drift min<input name="pushover_target_drift_ratio_min" type="number" min="0" step="0.001">
+              <label>Target drift min<input name="pushover_target_drift_ratio_min" type="number" min="0" step="0.001">
                 <span class="field-note">Lower bound for random selection when fixed target drift is disabled.</span>
               </label>
-              <label>Hedef drift max<input name="pushover_target_drift_ratio_max" type="number" min="0" step="0.001">
+              <label>Target drift max<input name="pushover_target_drift_ratio_max" type="number" min="0" step="0.001">
                 <span class="field-note">Upper bound for random selection when fixed target drift is disabled.</span>
               </label>
               <label>Target drift step<input name="pushover_target_drift_ratio_step" type="number" min="0.001" step="0.001">
                 <span class="field-note">Step used within the min-max range when fixed target drift is disabled.</span>
               </label>
-              <label>Taban kesme proxy kN<input name="pushover_base_shear_proxy_kn" type="number" min="0" step="10"></label>
+              <label>Base shear proxy kN<input name="pushover_base_shear_proxy_kn" type="number" min="0" step="10"></label>
               <label>Load distribution<input name="pushover_load_distribution" type="text"></label>
-              <label class="check"><input name="enable_plastic_hinges" type="checkbox">Plastik mafsal ata
+              <label class="check"><input name="enable_plastic_hinges" type="checkbox">Assign plastic hinges
                 <span class="field-note">Required for real pushover interpretation. A nonlinear static case without hinge assignment is not sufficient for capacity curves or IO/LS/CP performance evaluation.</span>
               </label>
               <label class="check"><input name="require_plastic_hinge_assignment" type="checkbox">Reject model if hinges cannot be assigned
@@ -417,7 +417,7 @@
                 <span class="field-note">Explicit M3 moment hinges are assigned at beam ends.</span>
               </label>
               <label class="check"><input name="assign_shear_hinges" type="checkbox">V2/V3 shear hinge</label>
-              <label class="check"><input name="enable_exact_hinge_ui_export" type="checkbox">Deneysel SAP hinge exportu
+              <label class="check"><input name="enable_exact_hinge_ui_export" type="checkbox">Experimental SAP hinge export
                   <span class="field-note">Disabled by default. Main generation uses proxy hinge results. This option only attempts to collect the SAP2000 Frame Hinge States table for a small number of validation models; SAP table automation may be slow and fragile.</span>
               </label>
               <label>Min hinge rows per direction<input name="exact_hinge_export_min_rows_per_direction" type="number" min="1" step="1">
@@ -429,8 +429,8 @@
               <label>Beam hinge property<input name="beam_hinge_property" type="text">
                 <span class="field-note">Informational field; in text import, `GEN_BEAM_M3` is actually written.</span>
               </label>
-              <label>V2 mafsal property<input name="shear_hinge_v2_property" type="text"></label>
-              <label>V3 mafsal property<input name="shear_hinge_v3_property" type="text"></label>
+              <label>V2 hinge property<input name="shear_hinge_v2_property" type="text"></label>
+              <label>V3 hinge property<input name="shear_hinge_v3_property" type="text"></label>
             </div>
           </div>
 
@@ -441,7 +441,7 @@
                   <h2>Pushover Results</h2>
                   <p class="section-note">After analysis, capacity curves, base shear-roof displacement values, and plastic hinge summaries are listed here.</p>
                 </div>
-                <button id="refreshResultsBtn" type="button">Yenile</button>
+                <button id="refreshResultsBtn" type="button">Refresh</button>
               </div>
               <div id="pushoverResults" class="result-list"></div>
             </section>
@@ -454,10 +454,10 @@
                   <h2>Charts</h2>
                   <p class="section-note">Compares the selected model parameter with pushover/proxy hinge results. Charts are generated from the model results currently available in the dashboard.</p>
                 </div>
-                <button id="refreshChartsBtn" type="button">Yenile</button>
+                <button id="refreshChartsBtn" type="button">Refresh</button>
               </div>
               <div class="grid four chart-controls">
-                <label>Grafik tipi
+                <label>Chart type
                   <select id="chartType">
                     <option value="scatter">Scatter</option>
                     <option value="bar">Group average</option>
@@ -630,6 +630,6 @@
       </div>
     </div>
 
-    <script src="/static/app.js?v=20260803previewfallback3"></script>
+    <script src="/static/app.js?v=20260803englishui3"></script>
   </body>
 </html>

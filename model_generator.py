@@ -2052,9 +2052,9 @@ def _write_model_preview_svg(path: Path, candidate: dict[str, Any]) -> None:
     <text x="672" y="525">Y ilk</text>
   </g>""" + source_note_svg
     else:
-        legend = '<text x="54" y="535" class="meta">Mafsal özeti yok</text>'
+        legend = '<text x="54" y="535" class="meta">No hinge summary</text>'
 
-    foundation_text = f"Zemin {candidate['soil_class']} | ks={candidate['subgrade_modulus_kn_m3']:.0f} kN/m3 | Radye={candidate['raft_thickness_m']:.2f} m rhoR={candidate['raft_rebar_ratio']:.4f} | Doseme={candidate['slab_thickness_m']:.2f} m rhoS={candidate['slab_rebar_ratio']:.4f}"
+    foundation_text = f"Soil {candidate['soil_class']} | ks={candidate['subgrade_modulus_kn_m3']:.0f} kN/m3 | Raft={candidate['raft_thickness_m']:.2f} m rhoR={candidate['raft_rebar_ratio']:.4f} | Slab={candidate['slab_thickness_m']:.2f} m rhoS={candidate['slab_rebar_ratio']:.4f}"
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
   <style>
     .bg {{ fill: #f7f9fb; }}
@@ -2086,7 +2086,7 @@ def _write_model_preview_svg(path: Path, candidate: dict[str, Any]) -> None:
   {legend}
   <rect x="{margin}" y="568" width="856" height="34" rx="6" class="badge"/>
   <text x="{margin + 18}" y="591" class="meta">
-    {_svg_escape(f"{story_count} kat, toplam H={total_height:.2f} m | X{candidate['x_bay_count']} Y{candidate['y_bay_count']} | {candidate['concrete_class']} | Kolon {col.label_cm} cm | Kiris {beam.label_cm} cm | rhoC={candidate['rho_col']:.4f}, ust={candidate['beam_top_ratio_support']:.4f}, alt={candidate['beam_bottom_ratio_span']:.4f} | Push={candidate['pushover_target_drift_ratio']:.3f} | {foundation_text}")}
+    {_svg_escape(f"{story_count} stories, total H={total_height:.2f} m | X{candidate['x_bay_count']} Y{candidate['y_bay_count']} | {candidate['concrete_class']} | Column {col.label_cm} cm | Beam {beam.label_cm} cm | rhoC={candidate['rho_col']:.4f}, top={candidate['beam_top_ratio_support']:.4f}, bottom={candidate['beam_bottom_ratio_span']:.4f} | Push={candidate['pushover_target_drift_ratio']:.3f} | {foundation_text}")}
   </text>
 </svg>
 """

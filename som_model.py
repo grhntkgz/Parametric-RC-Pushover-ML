@@ -1,4 +1,4 @@
-"""Self Organizing Map utilities for generated SAP2000 model results.
+﻿"""Self Organizing Map utilities for generated SAP2000 model results.
 
 Do not include pushover result variables in SOM training. These variables are
 post-analysis labels and must only be used for coloring and interpretation.
@@ -20,55 +20,54 @@ from fema440 import calculate_fema440_for_curve
 
 SOM_FILE = "som_model.json"
 TARGET_LEAKAGE_MESSAGE = (
-    "Bu değişken pushover sonucu elde edilen bir performans çıktısıdır. "
-    "SOM eğitimine dahil edilirse hasar bilgisi modele sızar ve sonuç yapay olarak iyileşir. "
-    "Bu değişken yalnızca renklendirme/yorumlama için kullanılmalıdır."
+    "This variable is a performance output obtained from pushover analysis. "
+    "If included in SOM training, damage information leaks into the model and artificially improves the result. "
+    "This variable must only be used for coloring and interpretation."
 )
 
 X_COLUMNS: dict[str, dict[str, Any]] = {
-    "direction": {"label": "Analiz yönü", "kind": "nominal"},
-    "story_count": {"label": "Kat sayısı", "kind": "numeric"},
-    "bay_count": {"label": "Açıklık sayısı", "kind": "numeric"},
-    "avg_span": {"label": "Açıklık mesafesi", "kind": "numeric"},
+    "direction": {"label": "Analysis direction", "kind": "nominal"},
+    "story_count": {"label": "Story count", "kind": "numeric"},
+    "bay_count": {"label": "Bay count", "kind": "numeric"},
+    "avg_span": {"label": "Bay length", "kind": "numeric"},
     "max_span": {"label": "Maximum span in analysis direction", "kind": "numeric"},
-    "story_height": {"label": "Kat yüksekliği", "kind": "numeric"},
-    "total_height": {"label": "Yapı yüksekliği", "kind": "numeric"},
+    "story_height": {"label": "Story height", "kind": "numeric"},
+    "total_height": {"label": "Building height", "kind": "numeric"},
     "target_displacement": {"label": "Target roof displacement", "kind": "numeric"},
     "plan_area": {"label": "Plan area", "kind": "numeric"},
     "plan_aspect_ratio": {"label": "Plan aspect ratio", "kind": "numeric"},
-    "column_width": {"label": "Kolon genişliği", "kind": "numeric"},
-    "column_depth": {"label": "Kolon yüksekliği", "kind": "numeric"},
-    "column_area": {"label": "Kolon alanı", "kind": "numeric"},
-    "beam_width": {"label": "Kiriş genişliği", "kind": "numeric"},
-    "beam_depth": {"label": "Kiriş yüksekliği", "kind": "numeric"},
-    "beam_area": {"label": "Kiriş alanı", "kind": "numeric"},
+    "column_width": {"label": "Column width", "kind": "numeric"},
+    "column_depth": {"label": "Column depth", "kind": "numeric"},
+    "column_area": {"label": "Column area", "kind": "numeric"},
+    "beam_width": {"label": "Beam width", "kind": "numeric"},
+    "beam_depth": {"label": "Beam depth", "kind": "numeric"},
+    "beam_area": {"label": "Beam area", "kind": "numeric"},
     "column_beam_area_ratio": {"label": "Column/beam area ratio", "kind": "numeric"},
     "column_beam_depth_ratio": {"label": "Column/beam depth ratio", "kind": "numeric"},
-    "column_beam_stiffness_ratio": {"label": "Kolon/kiriş rijitlik oranı", "kind": "numeric"},
+    "column_beam_stiffness_ratio": {"label": "Column/beam stiffness ratio", "kind": "numeric"},
     "span_depth_ratio": {"label": "Span/beam depth ratio", "kind": "numeric"},
-    "concrete_class": {"label": "Beton sınıfı", "kind": "ordinal", "mapping": "concrete"},
-    "steel_class": {"label": "Çelik sınıfı", "kind": "ordinal", "mapping": "steel"},
-    "rho_col": {"label": "Kolon donatı oranı", "kind": "numeric"},
-    "rho_beam_top": {"label": "Kiriş üst donatı oranı", "kind": "numeric"},
-    "rho_beam_bottom": {"label": "Kiriş alt donatı oranı", "kind": "numeric"},
-    "slab_thickness": {"label": "Döşeme kalınlığı", "kind": "numeric"},
-    "slab_rebar_ratio": {"label": "Döşeme donatı oranı", "kind": "numeric"},
-    "soil_class": {"label": "Zemin sınıfı", "kind": "ordinal", "mapping": "soil"},
-    "foundation_type": {"label": "Temel tipi", "kind": "nominal"},
-    "subgrade_modulus": {"label": "Zemin yatak katsayısı", "kind": "numeric"},
-    "raft_thickness": {"label": "Radye kalınlığı", "kind": "numeric"},
-    "raft_rebar_ratio": {"label": "Radye donatı oranı", "kind": "numeric"},
-    "target_drift": {"label": "Hedef drift", "kind": "numeric"},
-    "has_shear_walls": {"label": "Perde var/yok", "kind": "nominal"},
-    "wall_count": {"label": "Perde sayısı", "kind": "numeric"},
-    "wall_area": {"label": "Perde alanı", "kind": "numeric"},
+    "concrete_class": {"label": "Concrete class", "kind": "ordinal", "mapping": "concrete"},
+    "steel_class": {"label": "Steel class", "kind": "ordinal", "mapping": "steel"},
+    "rho_col": {"label": "Column reinforcement ratio", "kind": "numeric"},
+    "rho_beam_top": {"label": "Beam top reinforcement ratio", "kind": "numeric"},
+    "rho_beam_bottom": {"label": "Beam bottom reinforcement ratio", "kind": "numeric"},
+    "slab_thickness": {"label": "Slab thickness", "kind": "numeric"},
+    "slab_rebar_ratio": {"label": "Slab reinforcement ratio", "kind": "numeric"},
+    "soil_class": {"label": "Soil class", "kind": "ordinal", "mapping": "soil"},
+    "foundation_type": {"label": "Foundation type", "kind": "nominal"},
+    "subgrade_modulus": {"label": "Subgrade modulus", "kind": "numeric"},
+    "raft_thickness": {"label": "Raft thickness", "kind": "numeric"},
+    "raft_rebar_ratio": {"label": "Raft reinforcement ratio", "kind": "numeric"},
+    "target_drift": {"label": "Target drift", "kind": "numeric"},
+    "has_shear_walls": {"label": "Shear wall yes/no", "kind": "nominal"},
+    "wall_count": {"label": "Shear wall count", "kind": "numeric"},
+    "wall_area": {"label": "Shear wall area", "kind": "numeric"},
     "wall_area_ratio": {"label": "Wall area / plan area", "kind": "numeric"},
     "wall_count_per_plan_area": {"label": "Wall count / plan area", "kind": "numeric"},
-    "wall_thickness": {"label": "Perde kalınlığı", "kind": "numeric"},
-    "wall_length": {"label": "Perde uzunluğu", "kind": "numeric"},
-    "wall_rebar_ratio": {"label": "Perde donatı oranı", "kind": "numeric"},
+    "wall_thickness": {"label": "Shear wall thickness", "kind": "numeric"},
+    "wall_length": {"label": "Shear wall length", "kind": "numeric"},
+    "wall_rebar_ratio": {"label": "Shear wall reinforcement ratio", "kind": "numeric"},
 }
-
 DEFAULT_X_COLUMNS = (
     "story_count",
     "bay_count",
@@ -101,39 +100,38 @@ DEFAULT_X_COLUMNS = (
 )
 
 RESULT_METRICS: dict[str, dict[str, Any]] = {
-    "critical_state": {"label": "Kritik hasar seviyesi", "type": "category"},
-    "max_hinge_state": {"label": "Maksimum mafsal durumu", "type": "category"},
-    "performance_level_at_target": {"label": "Hedef deplasmanda performans seviyesi", "type": "category"},
-    "peak_base_shear": {"label": "Taban kesme kapasitesi", "type": "number"},
-    "max_displacement": {"label": "Maksimum deplasman", "type": "number"},
-    "target_displacement": {"label": "Hedef deplasman", "type": "number"},
-    "ductility_ratio": {"label": "Süneklik oranı", "type": "number"},
-    "collapse_mechanism": {"label": "Göçme mekanizması", "type": "category"},
-    "lscp_count": {"label": "LS-CP eleman sayısı", "type": "number"},
-    "cpc_count": {"label": "CP eleman sayısı", "type": "number"},
-    "lscp_ratio": {"label": "LS-CP oranı", "type": "number", "format": "percent"},
-    "cp_ratio": {"label": "CP oranı", "type": "number", "format": "percent"},
-    "max_story_drift_ratio": {"label": "Maksimum göreli kat ötelenmesi", "type": "number", "format": "percent"},
-    "max_rotation": {"label": "Maksimum plastik rotasyon", "type": "number"},
-    "first_hinge_type": {"label": "İlk mafsal tipi", "type": "category"},
-    "critical_element_type": {"label": "Kritik eleman tipi", "type": "category"},
-    "has_lscp": {"label": "LS-CP oluştu mu", "type": "category"},
-    "has_cp": {"label": "CP oluştu mu", "type": "category"},
-    "damage_class": {"label": "Hasar sınıfı", "type": "category"},
-    "fema_ductility_mu": {"label": "FEMA 440 süneklik μ", "type": "number"},
-    "fema_beta_eff_percent": {"label": "FEMA 440 etkin sönüm βeff", "type": "number", "format": "percent_value"},
+    "critical_state": {"label": "Critical damage state", "type": "category"},
+    "max_hinge_state": {"label": "Maximum hinge state", "type": "category"},
+    "performance_level_at_target": {"label": "Performance level at target displacement", "type": "category"},
+    "peak_base_shear": {"label": "Base shear capacity", "type": "number"},
+    "max_displacement": {"label": "Maximum displacement", "type": "number"},
+    "target_displacement": {"label": "Target displacement", "type": "number"},
+    "ductility_ratio": {"label": "Ductility ratio", "type": "number"},
+    "collapse_mechanism": {"label": "Collapse mechanism", "type": "category"},
+    "lscp_count": {"label": "LS-CP element count", "type": "number"},
+    "cpc_count": {"label": "CP element count", "type": "number"},
+    "lscp_ratio": {"label": "LS-CP ratio", "type": "number", "format": "percent"},
+    "cp_ratio": {"label": "CP ratio", "type": "number", "format": "percent"},
+    "max_story_drift_ratio": {"label": "Maximum interstory drift", "type": "number", "format": "percent"},
+    "max_rotation": {"label": "Maximum plastic rotation", "type": "number"},
+    "first_hinge_type": {"label": "First hinge type", "type": "category"},
+    "critical_element_type": {"label": "Critical element type", "type": "category"},
+    "has_lscp": {"label": "Any LS-CP event", "type": "category"},
+    "has_cp": {"label": "Any CP-C or more severe event", "type": "category"},
+    "damage_class": {"label": "Damage class", "type": "category"},
+    "fema_ductility_mu": {"label": "FEMA 440 ductility mu", "type": "number"},
+    "fema_beta_eff_percent": {"label": "FEMA 440 effective damping beta_eff", "type": "number", "format": "percent_value"},
     "fema_teff_t0_ratio": {"label": "FEMA 440 Teff/T0", "type": "number"},
     "fema_r_proxy": {"label": "FEMA 440 R proxy", "type": "number"},
     "fema_c1": {"label": "FEMA 440 C1", "type": "number"},
-    "fema_target_displacement_proxy": {"label": "FEMA 440 hedef deplasman proxy", "type": "number"},
-    "fema_target_capacity_ratio": {"label": "FEMA 440 hedef/kapasite oranı", "type": "number"},
-    "fema_capacity_status": {"label": "FEMA 440 kapasite durumu", "type": "category"},
-    "first_hinge_story": {"label": "Ilk plastik mafsal kacinci katta", "type": "number"},
-    "critical_element_story": {"label": "Kritik eleman kacinci katta", "type": "number"},
-    "first_hinge_plan_zone": {"label": "Ilk plastik mafsal kenarda/ortada", "type": "category"},
-    "critical_element_plan_zone": {"label": "Kritik eleman kenarda/ortada", "type": "category"},
+    "fema_target_displacement_proxy": {"label": "FEMA 440 target displacement proxy", "type": "number"},
+    "fema_target_capacity_ratio": {"label": "FEMA 440 target/capacity ratio", "type": "number"},
+    "fema_capacity_status": {"label": "FEMA 440 capacity status", "type": "category"},
+    "first_hinge_story": {"label": "First plastic hinge story", "type": "number"},
+    "critical_element_story": {"label": "Critical element story", "type": "number"},
+    "first_hinge_plan_zone": {"label": "First plastic hinge edge/middle", "type": "category"},
+    "critical_element_plan_zone": {"label": "Critical element edge/middle", "type": "category"},
 }
-
 Y_ALIASES = {
     "kritik_hasar_seviyesi": "critical_state",
     "maksimum_plastik_mafsal_seviyesi": "max_hinge_state",
@@ -215,7 +213,7 @@ def train_som(
 
     rows = build_som_rows(output_dir)
     if len(rows) < 4:
-        raise ValueError("SOM için en az 4 yön-sonucu gerekir.")
+        raise ValueError("At least 4 direction-results are required for SOM.")
 
     som_input = [{key: row.get(key) for key in selected_x} for row in rows]
     y_values = [row.get(selected_y_column) for row in rows]
@@ -246,9 +244,9 @@ def train_som(
         "result_metric_meta": RESULT_METRICS[selected_y_column],
         "excluded_y_columns": list(RESULT_METRICS),
         "target_leakage_warning": TARGET_LEAKAGE_MESSAGE,
-        "training_note": "SOM modeli yalnızca seçilen X parametreleriyle eğitilir. Seçilen Y sonucu eğitimde kullanılmaz; yalnızca harita hücrelerinin mühendislik yorumunu yapmak için sonradan renklendirilir. Böylece modelin hasar sonucunu ezberlemesi engellenir.",
-        "source_note": "SOM yalnızca X parametreleriyle eğitilir; seçilen Y sonucu harita hücrelerini yorumlamak için sonradan renklendirilir.",
-        "engineering_question": "Benzer yapısal/tasarım parametrelerine sahip modeller, pushover sonucunda benzer kritik hasar seviyelerine mi ulaşıyor?",
+        "training_note": "The SOM model is trained only with the selected X parameters. The selected Y result is not used during training; it is applied afterward only to color and interpret map cells. This prevents the model from memorizing damage outcomes.",
+        "source_note": "The SOM is trained only with X parameters; the selected Y result is applied afterward to interpret map cells.",
+        "engineering_question": "Do models with similar structural/design parameters reach similar critical damage states in pushover analysis?",
         "quantization_error": round(quantization_error, 5),
         "topographic_error": round(topographic_error, 5),
         "purity": None if purity is None else round(purity, 5),
@@ -306,9 +304,9 @@ def train_som_loaded_rows(
         "result_metric_meta": RESULT_METRICS[selected_y_column],
         "excluded_y_columns": list(RESULT_METRICS),
         "target_leakage_warning": TARGET_LEAKAGE_MESSAGE,
-        "training_note": "SOM modeli yalnÄ±zca seÃ§ilen X parametreleriyle eÄŸitilir. SeÃ§ilen Y sonucu eÄŸitimde kullanÄ±lmaz; yalnÄ±zca harita hÃ¼crelerinin mÃ¼hendislik yorumunu yapmak iÃ§in sonradan renklendirilir. BÃ¶ylece modelin hasar sonucunu ezberlemesi engellenir.",
-        "source_note": "SOM yalnÄ±zca X parametreleriyle eÄŸitilir; seÃ§ilen Y sonucu harita hÃ¼crelerini yorumlamak iÃ§in sonradan renklendirilir.",
-        "engineering_question": "Benzer yapÄ±sal/tasarÄ±m parametrelerine sahip modeller, pushover sonucunda benzer kritik hasar seviyelerine mi ulaÅŸÄ±yor?",
+        "training_note": "The SOM model is trained only with the selected X parameters. The selected Y result is not used during training; it is applied afterward only to color and interpret map cells. This prevents the model from memorizing damage outcomes.",
+        "source_note": "The SOM is trained only with X parameters; the selected Y result is applied afterward to interpret map cells.",
+        "engineering_question": "Do models with similar structural/design parameters reach similar critical damage states in pushover analysis?",
         "quantization_error": round(quantization_error, 5),
         "topographic_error": round(topographic_error, 5),
         "purity": None if purity is None else round(purity, 5),
@@ -364,7 +362,7 @@ def optimize_som_grid(
     start_size = max(3, min(int(start_size), 20))
     max_size = max(3, min(int(max_size), 20))
     if start_size > max_size:
-        raise ValueError("Min grid, maks grid değerinden büyük olamaz.")
+        raise ValueError("Min grid cannot be greater than max grid.")
     iterations = max(50, min(int(iterations), 20_000))
     selected_y_column = normalize_y_column(result_metric)
     selected_x = validate_selected_columns(selected_x_columns or list(DEFAULT_X_COLUMNS), selected_y_column)
@@ -455,7 +453,7 @@ def som_status(output_dir: Path) -> dict[str, Any]:
         "target_leakage_warning": TARGET_LEAKAGE_MESSAGE,
     }
     if not path.exists():
-        return {"available": False, "message": "Henüz SOM eğitilmedi.", **base}
+        return {"available": False, "message": "SOM has not been trained yet.", **base}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -505,15 +503,15 @@ def validate_selected_columns(selected_x_columns: list[str] | tuple[str, ...], s
         normalized_x.append(X_ALIASES.get(raw_key, raw_key))
     invalid_y_in_x = [key for key in normalized_x if key in RESULT_METRICS]
     if invalid_y_in_x:
-        raise ValueError(f"{TARGET_LEAKAGE_MESSAGE} Yasak değişken(ler): {', '.join(invalid_y_in_x)}")
+        raise ValueError(f"{TARGET_LEAKAGE_MESSAGE} Forbidden variable(s): {', '.join(invalid_y_in_x)}")
     unknown = [key for key in normalized_x if key not in X_COLUMNS]
     if unknown:
-        raise ValueError(f"SOM eğitiminde kullanılabilecek X değişkeni değil: {', '.join(unknown)}")
+        raise ValueError(f"Not an available X variable for SOM training: {', '.join(unknown)}")
     if selected_y_column not in RESULT_METRICS:
-        raise ValueError(f"Bilinmeyen Y sonuç değişkeni: {selected_y_column}")
+        raise ValueError(f"Unknown Y result variable: {selected_y_column}")
     unique = list(dict.fromkeys(normalized_x))
     if not unique:
-        raise ValueError("SOM eğitimi için en az bir X parametresi seçilmelidir.")
+        raise ValueError("At least one X parameter must be selected for SOM training.")
     return unique
 
 
@@ -808,7 +806,7 @@ def distinctive_features(feature_means: dict[str, Any], global_stats: dict[str, 
         if abs(diff) < 1.0e-12:
             continue
         score = abs(diff) / std if std > 1.0e-12 else abs(diff)
-        ranked.append({"feature": key, "cell_mean": round(value, 6), "global_mean": round(mean, 6), "difference": round(diff, 6), "direction": "yüksek" if diff > 0.0 else "düşük", "score": round(score, 4)})
+        ranked.append({"feature": key, "cell_mean": round(value, 6), "global_mean": round(mean, 6), "difference": round(diff, 6), "direction": "high" if diff > 0.0 else "low", "score": round(score, 4)})
     return sorted(ranked, key=lambda item: float(item["score"]), reverse=True)[:limit]
 
 
@@ -1041,10 +1039,10 @@ def render_som_map(cell_summaries: list[dict[str, Any]], selected_y_column: str)
 def som_interpretation(purity: float | None) -> str:
     """Return automatic engineering interpretation for SOM purity."""
     if purity is None:
-        return "Seçilen Y sonucu sayısal olduğu için purity skoru hesaplanmadı; hücrelerde ortalama/min/maks/std değerleri yorumlanmalıdır."
+        return "Because the selected Y result is numeric, a purity score was not calculated; mean/min/max/std values should be interpreted within cells."
     if purity >= 0.70:
-        return "Yalnızca X parametreleriyle eğitilen SOM haritasında, seçilen Y sonucu hücreler içinde tutarlı şekilde kümelenmiştir. Bu durum, yapısal/tasarım parametreleri ile pushover performans seviyesi arasında anlamlı bir ilişki olduğunu gösterir."
-    return "Yalnızca X parametreleriyle eğitilen SOM haritasında, seçilen Y sonucu hücreler içinde karışık dağılmıştır. Bu durum, mevcut X parametrelerinin seçilen performans sonucunu açıklamada yetersiz kalabileceğini veya daha fazla veri/özellik gerektiğini gösterir."
+        return "On the SOM map trained only with X parameters, the selected Y result is clustered consistently within cells. This indicates a meaningful relationship between structural/design parameters and pushover performance."
+    return "On the SOM map trained only with X parameters, the selected Y result is mixed across cells. This may indicate that the current X parameters are insufficient to explain the selected performance result, or that more data/features are needed."
 
 
 def numeric_or_ordinal_value(column: str, value: Any) -> float:
@@ -1273,3 +1271,4 @@ def is_number(value: Any) -> bool:
 def euclidean(left: list[float], right: list[float]) -> float:
     """Euclidean distance between two encoded vectors."""
     return math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right)))
+

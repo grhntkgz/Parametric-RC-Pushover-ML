@@ -114,7 +114,7 @@ def resolve_ml_x_columns(output_dir: Path, requested: list[str] | None) -> list[
     if requested is not None:
         unknown = [str(key) for key in requested if str(key) not in X_COLUMNS]
         if unknown:
-            raise ValueError(f"Bilinmeyen ML X parametreleri: {', '.join(unknown)}")
+            raise ValueError(f"Unknown ML X parameters: {', '.join(unknown)}")
         selected = list(dict.fromkeys(str(key) for key in requested))
         if not selected:
             raise ValueError("Makine ogrenmesi icin en az bir X parametresi secmelisin.")

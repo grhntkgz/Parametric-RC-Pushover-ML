@@ -40,7 +40,7 @@ def calculate_fema440_for_curve(curve: dict[str, Any], story_count: float | None
     if len(points) < 2:
         return {
             "available": False,
-            "message": "Kapasite eğrisi noktası yetersiz; FEMA 440 ön değerlendirmesi yapılamadı.",
+            "message": "Insufficient capacity-curve points; FEMA 440 preliminary assessment could not be performed.",
         }
 
     ideal = _idealize_capacity(points)
@@ -63,7 +63,7 @@ def calculate_fema440_for_curve(curve: dict[str, Any], story_count: float | None
 
     return {
         "available": True,
-        "method_note": "Ön değerlendirme: talep spektrumu ve modal katılım katsayısı olmadığı için performans noktası değil, kapasite eğrisi tabanlı FEMA 440 göstergeleri hesaplanır.",
+        "method_note": "Preliminary assessment: because no demand spectrum or modal participation factor is available, capacity-curve-based FEMA 440 indicators are computed rather than a formal performance point.",
         "idealization": ideal,
         "equivalent_linearization": {
             "ductility_mu": round(mu, 4),
@@ -73,7 +73,7 @@ def calculate_fema440_for_curve(curve: dict[str, Any], story_count: float | None
             "effective_damping_beta_percent": round(beta_eff, 4),
             "damping_reduction_factor_b_beta": round(beta_reduction, 4),
             "performance_displacement_m": None,
-            "message": "Gerçek FEMA 440 EL performans noktası için 5% sönümlü talep spektrumu gerekir.",
+            "message": "A 5% damped demand spectrum is required for an actual FEMA 440 EL performance point.",
         },
         "displacement_modification": {
             "coefficient_site_class": site_class,
@@ -85,7 +85,7 @@ def calculate_fema440_for_curve(curve: dict[str, Any], story_count: float | None
             "c3": c3,
             "elastic_displacement_proxy_m": round(elastic_displacement_proxy, 5),
             "target_displacement_proxy_m": round(target_displacement_proxy, 5),
-            "message": "Bu değer spektral talep yerine kapasite eğrisi proxy değerlerinden türetilmiştir; nihai FEMA 440 hedef deplasmanı değildir.",
+            "message": "This value is derived from capacity-curve proxy values rather than spectral demand; it is not a final FEMA 440 target displacement.",
         },
     }
 
@@ -121,7 +121,7 @@ def _idealize_capacity(points: list[dict[str, float]]) -> dict[str, Any]:
     """Idealize a capacity curve using a stiffness-degradation yield proxy."""
     positive = [point for point in points if point["displacement_m"] > 1e-9 and point["base_shear_kn"] > 1e-9]
     if len(positive) < 2:
-        return {"available": False, "message": "Pozitif kapasite eğrisi noktası yetersiz."}
+        return {"available": False, "message": "Insufficient positive capacity-curve points."}
 
     initial = positive[0]
     initial_stiffness = initial["base_shear_kn"] / initial["displacement_m"]
@@ -154,7 +154,7 @@ def _idealize_capacity(points: list[dict[str, float]]) -> dict[str, Any]:
         "peak_base_shear_kn": round(peak["base_shear_kn"], 3),
         "initial_stiffness_kn_m": round(initial_stiffness, 3),
         "post_yield_stiffness_ratio_alpha": round(alpha, 5),
-        "idealization_note": "Yield noktası, kapasite eğrisinde rijitlik azalımı ve 0.6*Vpeak eşiği ile yaklaşık belirlenir.",
+        "idealization_note": "The yield point is approximated from stiffness degradation on the capacity curve and the 0.6*Vpeak threshold.",
     }
 
 
