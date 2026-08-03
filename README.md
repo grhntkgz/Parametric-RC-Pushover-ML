@@ -96,18 +96,20 @@ This sample set is intended for reviewers who want to inspect the dashboard and 
 
 Selected dashboard screenshots are included for quick review:
 
-- [General settings panel](docs/screenshots/dashboard_settings_panel.png)
-- [Behavior ML analysis panel](docs/screenshots/dashboard_behavior_ml_panel.png)
-- [Machine learning panel](docs/screenshots/dashboard_machine_learning_panel.png)
-- [Charts panel](docs/screenshots/dashboard_charts_panel.png)
-
-Selected English representative SVG examples are also included for quick visual inspection:
-
-- [Representative model view 01](docs/screenshots/model_representative_view_01.svg)
-- [Representative model view 02](docs/screenshots/model_representative_view_02.svg)
-- [Representative model view 03](docs/screenshots/model_representative_view_03.svg)
-- [Representative model view 04](docs/screenshots/model_representative_view_04.svg)
-- [Representative model view 05](docs/screenshots/model_representative_view_05.svg)
+- [General settings 1](docs/screenshots/General%201.jpg)
+- [General settings 2](docs/screenshots/General%202.jpg)
+- [General settings 3](docs/screenshots/General%203.jpg)
+- [Geometry settings 1](docs/screenshots/Geometry%201.jpg)
+- [Geometry settings 2](docs/screenshots/Geometry%202.jpg)
+- [Geometry settings 3](docs/screenshots/Geometry%203.jpg)
+- [Material settings](docs/screenshots/Material%201.jpg)
+- [Reinforcement settings](docs/screenshots/Reinforcement%201.jpg)
+- [Foundation and soil settings](docs/screenshots/Foundation%20Soil%201.jpg)
+- [Pre-analysis checks](docs/screenshots/Checks.jpg)
+- [Pushover settings](docs/screenshots/Pushover.jpg)
+- [Generation running state](docs/screenshots/running.jpg)
+- [Behavior ML panel](docs/screenshots/Behavior%20ML.jpg)
+- [Machine learning panel](docs/screenshots/Machine%20Learning.jpg)
 
 Representative model SVG previews are provided in `examples/sample_previews/`.
 
