@@ -909,8 +909,10 @@ async function init() {
         behaviorMlStatus.innerHTML = `<div class="muted-box">Behavior list loaded from local fallback. Restart the dashboard server if API metadata is unavailable: ${escapeHtml(error.message)}</div>`;
       }
     });
-    await refreshMlInputParameters();
     await refreshArtifacts();
+    refreshMlInputParameters().catch((error) => {
+      if (mlXColumns) mlXColumns.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
+    });
     window.setTimeout(() => {
       refreshResults().catch((error) => {
         if (pushoverResults) pushoverResults.innerHTML = `<div class="error-box">${escapeHtml(error.message)}</div>`;
@@ -1270,8 +1272,10 @@ async function refreshArtifacts() {
     previewCurrentPage = totalPages;
     return refreshArtifacts();
   }
-  const results = await refreshResults();
-  const modelsByName = new Map((results.models || []).map((model) => [model.name, model]));
+  // Keep the preview gallery independent from the full result index. Large
+  // metadata folders can make /api/model-results slow; preview cards should
+  // still appear immediately from the lightweight artifact inventory.
+  const modelsByName = new Map((latestModelResults || []).map((model) => [model.name, model]));
   renderPreviewRunFilter(inventory.preview_runs || []);
   renderPreviewPageInfo(inventory);
   renderPreviewPagination(inventory);
@@ -1314,6 +1318,11 @@ async function refreshArtifacts() {
       openSapModel(openButton.dataset.modelName);
     });
     previewGallery.appendChild(card);
+  });
+  refreshResults().catch((error) => {
+    if (logBox && !String(logBox.textContent || "").includes("Result index")) {
+      logBox.textContent = `${logBox.textContent || ""}\nResult index could not be loaded for preview highlighting: ${error.message}`.trim();
+    }
   });
 }
 
