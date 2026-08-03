@@ -34,7 +34,6 @@ The full model-generation workflow uses SAP2000 OAPI/COM on Windows. The dashboa
 |   |-- sample_metadata/
 |   |-- sample_previews/
 |   `-- sample_logs/
-|-- figures/
 |-- docs/
 `-- tests/
 ```
