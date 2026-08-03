@@ -112,6 +112,16 @@ Selected dashboard screenshots are included for quick review:
 
 Representative model SVG previews are provided in `examples/sample_previews/`.
 
+## Capacity-Curve Derived Metrics
+
+Completed metadata files can be converted into manuscript-ready capacity-curve metrics without reopening SAP2000:
+
+```powershell
+python capacity_curve_analysis.py --metadata-dir "path\to\metadata" --output-dir "path\to\capacity_curve_analysis"
+```
+
+The script exports directional curve metrics, X/Y asymmetry metrics, damage-class summaries, critical-element summaries, normalized mean capacity-curve SVG figures, and a compact Markdown report. These outputs are intended for generalized interpretation of pushover response trends rather than plotting every individual capacity curve.
+
 ## Research Scope
 
 This framework is intended for synthetic parametric analysis and data-supported interpretation of nonlinear behavior trends. It is not a replacement for final reinforced concrete design, detailed code compliance checks, or project-specific engineering verification.
