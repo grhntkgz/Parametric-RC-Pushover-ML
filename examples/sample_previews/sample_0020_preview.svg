@@ -21,7 +21,7 @@
   <text x="52" y="48" class="title">5Story X4 Y2 C40</text>
   <rect x="52" y="70" width="856" height="420" rx="8" class="panel"/>
   <text x="52" y="86" class="label">Plan</text>
-  <text x="540" y="86" class="label">Elevasyon</text>
+  <text x="540" y="86" class="label">Elevation</text>
   <line x1="52.0" y1="96" x2="52.0" y2="416" class="grid"/><line x1="122.4" y1="96" x2="122.4" y2="416" class="grid"/><line x1="224.2" y1="96" x2="224.2" y2="416" class="grid"/><line x1="318.1" y1="96" x2="318.1" y2="416" class="grid"/><line x1="412.0" y1="96" x2="412.0" y2="416" class="grid"/><line x1="52" y1="96.0" x2="412" y2="96.0" class="grid"/><line x1="52" y1="235.1" x2="412" y2="235.1" class="grid"/><line x1="52" y1="416.0" x2="412" y2="416.0" class="grid"/><rect x="48.0" y="92.0" width="8" height="8" class="joint"/><rect x="48.0" y="231.1" width="8" height="8" class="joint"/><rect x="48.0" y="412.0" width="8" height="8" class="joint"/><rect x="118.4" y="92.0" width="8" height="8" class="joint"/><rect x="118.4" y="231.1" width="8" height="8" class="joint"/><rect x="118.4" y="412.0" width="8" height="8" class="joint"/><rect x="220.2" y="92.0" width="8" height="8" class="joint"/><rect x="220.2" y="231.1" width="8" height="8" class="joint"/><rect x="220.2" y="412.0" width="8" height="8" class="joint"/><rect x="314.1" y="92.0" width="8" height="8" class="joint"/><rect x="314.1" y="231.1" width="8" height="8" class="joint"/><rect x="314.1" y="412.0" width="8" height="8" class="joint"/><rect x="408.0" y="92.0" width="8" height="8" class="joint"/><rect x="408.0" y="231.1" width="8" height="8" class="joint"/><rect x="408.0" y="412.0" width="8" height="8" class="joint"/>
   <line x1="540.0" y1="96" x2="540.0" y2="416" class="grid"/><line x1="622.5" y1="96" x2="622.5" y2="416" class="grid"/><line x1="705.0" y1="96" x2="705.0" y2="416" class="grid"/><line x1="787.5" y1="96" x2="787.5" y2="416" class="grid"/><line x1="870.0" y1="96" x2="870.0" y2="416" class="grid"/><line x1="540" y1="416.0" x2="870" y2="416.0" class="grid"/><line x1="540" y1="352.0" x2="870" y2="352.0" class="grid"/><line x1="540" y1="288.0" x2="870" y2="288.0" class="grid"/><line x1="540" y1="224.0" x2="870" y2="224.0" class="grid"/><line x1="540" y1="160.0" x2="870" y2="160.0" class="grid"/><line x1="540" y1="96.0" x2="870" y2="96.0" class="grid"/>
   <circle cx="238.2" cy="416.0" r="15" class="marker x-critical"/><line x1="705.8" y1="416.0" x2="705.8" y2="352.0" class="highlight x-critical"/><circle cx="108.4" cy="416.0" r="11" class="marker x-first"/><line x1="596.6" y1="416.0" x2="596.6" y2="352.0" class="highlight x-first"/><circle cx="412.0" cy="249.1" r="15" class="marker y-critical"/><line x1="888.0" y1="416.0" x2="888.0" y2="352.0" class="highlight y-critical"/><circle cx="122.4" cy="221.1" r="11" class="marker y-first"/><line x1="586.6" y1="416.0" x2="586.6" y2="352.0" class="highlight y-first"/>
@@ -29,16 +29,16 @@
   
   <g class="legend">
     <line x1="54" y1="518" x2="92" y2="518" class="highlight x-critical"/>
-    <text x="106" y="525">X kritik</text>
+    <text x="106" y="525">X critical</text>
     <line x1="245" y1="518" x2="283" y2="518" class="highlight x-first"/>
-    <text x="297" y="525">X ilk</text>
+    <text x="297" y="525">X first</text>
     <line x1="430" y1="518" x2="468" y2="518" class="highlight y-critical"/>
-    <text x="482" y="525">Y kritik</text>
+    <text x="482" y="525">Y critical</text>
     <line x1="620" y1="518" x2="658" y2="518" class="highlight y-first"/>
-    <text x="672" y="525">Y ilk</text>
+    <text x="672" y="525">Y first</text>
   </g>
   <rect x="52" y="568" width="856" height="34" rx="6" class="badge"/>
   <text x="70" y="591" class="meta">
-    5 kat, toplam H=17.00 m | X4 Y2 | C40 | Kolon 50x50 cm | Kiris 30x50 cm | rhoC=0.0150, ust=0.0200, alt=0.0160 | Push=0.020 | Zemin ZA | ks=120000 kN/m3 | Radye=0.50 m rhoR=0.0025 | Doseme=0.25 m rhoS=0.0025
+    5 stories, total H=17.00 m | X4 Y2 | C40 | Column 50x50 cm | Beam 30x50 cm | rhoC=0.0150, top=0.0200, bottom=0.0160 | Push=0.020 | Soil ZA | ks=120000 kN/m3 | Raft=0.50 m rhoR=0.0025 | Slab=0.25 m rhoS=0.0025
   </text>
 </svg>

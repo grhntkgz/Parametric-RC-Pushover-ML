@@ -20,23 +20,23 @@ The full model-generation workflow uses SAP2000 OAPI/COM on Windows. The dashboa
 
 ```text
 .
-├── config.py
-├── design_rules.py
-├── sap_api.py
-├── model_generator.py
-├── main.py
-├── dashboard/
-│   ├── server.py
-│   └── static/
-├── behavior_ml.py
-├── ml_model.py
-├── examples/
-│   ├── sample_metadata/
-│   ├── sample_previews/
-│   └── sample_logs/
-├── figures/
-├── docs/
-└── tests/
+|-- config.py
+|-- design_rules.py
+|-- sap_api.py
+|-- model_generator.py
+|-- main.py
+|-- dashboard/
+|   |-- server.py
+|   `-- static/
+|-- behavior_ml.py
+|-- ml_model.py
+|-- examples/
+|   |-- sample_metadata/
+|   |-- sample_previews/
+|   `-- sample_logs/
+|-- figures/
+|-- docs/
+`-- tests/
 ```
 
 ## Installation
@@ -100,6 +100,14 @@ Selected dashboard screenshots are included for quick review:
 - [Behavior ML analysis panel](docs/screenshots/dashboard_behavior_ml_panel.png)
 - [Machine learning panel](docs/screenshots/dashboard_machine_learning_panel.png)
 - [Charts panel](docs/screenshots/dashboard_charts_panel.png)
+
+Selected English representative SVG examples are also included for quick visual inspection:
+
+- [Representative model view 01](docs/screenshots/model_representative_view_01.svg)
+- [Representative model view 02](docs/screenshots/model_representative_view_02.svg)
+- [Representative model view 03](docs/screenshots/model_representative_view_03.svg)
+- [Representative model view 04](docs/screenshots/model_representative_view_04.svg)
+- [Representative model view 05](docs/screenshots/model_representative_view_05.svg)
 
 Representative model SVG previews are provided in `examples/sample_previews/`.
 
