@@ -104,7 +104,7 @@
                   <h2>Column sections</h2>
                   <p class="section-note">Code/pre-screening: For RC columns, a minimum dimension around 30 cm is treated as the lower limit; this software rejects columns below 30 cm. For shear walls, TBDY defines l_w/t_w >= 6, and typical wall web thickness should not be less than story height/16 or 250 mm. Common practice: 40x40-50x50 cm columns for 4-5 stories, 50x50-70x70 cm for 6-8 stories; shear walls often use 25-30 cm thickness and about 1.5-4.0 m length.</p>
                 </div>
-                <button id="addColumnSection" type="button">Ekle</button>
+                <button id="addColumnSection" type="button">Add</button>
               </div>
               <table class="section-table" id="columnSections"></table>
             </div>
@@ -114,7 +114,7 @@
                   <h2>Beam sections</h2>
                   <p class="section-note">Code/pre-screening: Minimum beam width is 25 cm and minimum depth is 50 cm; an L/h <= 15 pre-check is also applied. Common sections: 25x50, 30x50, 30x60, 35x60, 35x70 cm.</p>
                 </div>
-                <button id="addBeamSection" type="button">Ekle</button>
+                <button id="addBeamSection" type="button">Add</button>
               </div>
               <table class="section-table" id="beamSections"></table>
             </div>
@@ -515,7 +515,7 @@
                 </label>
                </div>
               <div class="info-block">
-                <b>Machine Learning Girdi Parametreleri (X)</b>
+                <b>Machine Learning Input Parameters (X)</b>
                 <p class="section-note">The ML model is trained only with the selected input parameters. Output/result variables are excluded from the feature matrix to avoid target leakage.</p>
                 <div id="mlXColumns" class="som-x-columns"></div>
               </div>
@@ -630,6 +630,6 @@
       </div>
     </div>
 
-    <script src="/static/app.js?v=20260803englishui3"></script>
+    <script src="/static/app.js?v=20260803englishui4"></script>
   </body>
 </html>

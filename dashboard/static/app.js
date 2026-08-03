@@ -800,9 +800,9 @@ const somFeatureLabels = {
   slab_rebar_ratio: "Slab reinforcement ratio",
   raft_rebar_ratio: "Raft reinforcement ratio",
   wall_area: "Shear wall area",
-  subgrade_modulus: "Zemin yatak katsayısı",
-  raft_thickness: "Radye kalınlığı",
-  target_drift: "Hedef drift",
+  subgrade_modulus: "Subgrade modulus",
+  raft_thickness: "Raft thickness",
+  target_drift: "Target drift",
 };
 
 const somPercentFeatures = new Set(["rho_col", "rho_beam_top", "rho_beam_bottom", "slab_rebar_ratio", "raft_rebar_ratio", "target_drift"]);
@@ -1143,7 +1143,7 @@ function addRatioInput(container, value, checked = true) {
   wrap.innerHTML = `
     <input class="ratio-enabled" type="checkbox" ${checked ? "checked" : ""}>
     <input class="ratio-value" type="number" min="0" step="0.001" value="${value}">
-    <button type="button" title="Sil">Sil</button>
+    <button type="button" title="Remove">Remove</button>
   `;
   wrap.querySelector("button").addEventListener("click", () => wrap.remove());
   const addButton = container.querySelector(".add-ratio-btn");
@@ -1165,7 +1165,7 @@ function addSectionRow(tableId, section) {
   row.innerHTML = `
     <td><input class="section-width" type="number" min="0.01" step="0.01" value="${section.width}"></td>
     <td><input class="section-depth" type="number" min="0.01" step="0.01" value="${section.depth}"></td>
-    <td><button type="button" class="remove-row" title="Satırı sil">Sil</button></td>
+    <td><button type="button" class="remove-row" title="Remove row">Remove</button></td>
   `;
   row.querySelector(".remove-row").addEventListener("click", () => row.remove());
   tbody.appendChild(row);
@@ -1253,10 +1253,10 @@ function renderPreview(candidates) {
     item.innerHTML = `
       <div class="preview-title">${escapeHtml(candidate.name)}</div>
       <div class="preview-meta">
-        ${candidate.story_count} kat, X${candidate.x_bays} Y${candidate.y_bays}, ${candidate.concrete},
-        kolon ${candidate.column}, kiriş ${candidate.beam},
-        rhoC ${candidate.rho_col}, üst ${candidate.beam_top_ratio_support}, alt ${candidate.beam_bottom_ratio_span}, push ${candidate.push_drift},
-        döşeme ${candidate.slab_thickness_m} m, rhoS ${candidate.slab_rebar_ratio}, zemin ${candidate.soil_class}, radye ${candidate.raft_thickness_m} m, rhoR ${candidate.raft_rebar_ratio}, ks ${candidate.subgrade_modulus_kn_m3},
+        ${candidate.story_count} stories, X${candidate.x_bays} Y${candidate.y_bays}, ${candidate.concrete},
+        column ${candidate.column}, beam ${candidate.beam},
+        rhoC ${candidate.rho_col}, top ${candidate.beam_top_ratio_support}, bottom ${candidate.beam_bottom_ratio_span}, push ${candidate.push_drift},
+        slab ${candidate.slab_thickness_m} m, rhoS ${candidate.slab_rebar_ratio}, soil ${candidate.soil_class}, raft ${candidate.raft_thickness_m} m, rhoR ${candidate.raft_rebar_ratio}, ks ${candidate.subgrade_modulus_kn_m3},
         perde ${candidate.has_shear_walls ? `${candidate.wall_thickness_m} m x ${candidate.wall_length_m} m, rhoW ${candidate.wall_rebar_ratio}` : "yok"}
         ${reason}
       </div>
@@ -1369,7 +1369,7 @@ async function refreshArtifacts() {
   if (!inventory.files.length || !inventory.previews.length) {
     const runningMessage = String(inventory.message || "").toLowerCase().includes("devam");
     if (!runningMessage || !previewGallery.children.length) {
-      previewGallery.innerHTML = `<div class="preview-item"><div class="preview-meta">${escapeHtml(inventory.message || "Henuz model gorseli yok.")}</div></div>`;
+      previewGallery.innerHTML = `<div class="preview-item"><div class="preview-meta">${escapeHtml(inventory.message || "No model representative view yet.")}</div></div>`;
     }
     return;
   }
@@ -1429,7 +1429,7 @@ function renderPreviewPageInfo(inventory) {
   const offset = Number(inventory.preview_offset || 0);
   const start = total && shown ? offset + 1 : 0;
   const end = total && shown ? offset + shown : 0;
-  previewPageInfo.textContent = total ? `${start}-${end} / ${total} gösteriliyor` : "";
+  previewPageInfo.textContent = total ? `Showing ${start}-${end} / ${total}` : "";
 }
 
 function renderPreviewPagination(inventory) {
@@ -1453,14 +1453,14 @@ function renderPreviewPagination(inventory) {
     if (page >= 1 && page <= totalPages) pageSet.add(page);
   }
   const pages = Array.from(pageSet).sort((a, b) => a - b);
-  addButton(previewCurrentPage - 1, "Önceki", previewCurrentPage <= 1);
+  addButton(previewCurrentPage - 1, "Previous", previewCurrentPage <= 1);
   pages.forEach((page, index) => {
     if (index > 0 && page - pages[index - 1] > 1) {
       addButton(pages[index - 1], "...", true);
     }
     addButton(page, String(page), false, page === previewCurrentPage);
   });
-  addButton(previewCurrentPage + 1, "Sonraki", previewCurrentPage >= totalPages);
+  addButton(previewCurrentPage + 1, "Next", previewCurrentPage >= totalPages);
   previewPagination.innerHTML = pageButtons.join("");
   previewPagination.querySelectorAll("button[data-preview-page]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1591,7 +1591,7 @@ function normalizeSharedXColumns(columns, available) {
 function validateSomSelection() {
   const selected = selectedSomXColumns();
   const leaked = selected.filter((key) => somResultKeys.has(key));
-  if (!selected.length) return "SOM eğitimi için en az bir X parametresi seçmelisin.";
+  if (!selected.length) return "Select at least one X parameter for SOM training.";
   if (leaked.length) return `Bu değişkenler Y sonucudur ve X eğitim matrisine alınamaz: ${leaked.join(", ")}`;
   return "";
 }
@@ -1608,7 +1608,7 @@ async function refreshSom() {
     const metadata = await fetchJson("/api/som/metadata");
     populateSomControls(metadata.result_metrics || defaultSomMetrics);
     renderSomXColumns(metadata);
-    if (somLeakageWarning) somLeakageWarning.textContent = metadata.target_leakage_warning || "Y sonuç değişkenleri SOM eğitim matrisine alınmaz; hedef sızıntısı engellenir.";
+    if (somLeakageWarning) somLeakageWarning.textContent = metadata.target_leakage_warning || "Y/result variables are not included in the SOM training matrix; target leakage is prevented.";
   } catch (_error) {
     // Full status below will still report the user-facing error if the SOM API is unavailable.
   }
@@ -1617,7 +1617,7 @@ async function refreshSom() {
   populateSomControls(status.result_metrics || defaultSomMetrics);
   if (status.result_metric && somResultMetric) somResultMetric.value = status.result_metric;
   renderSomXColumns(status);
-  if (somLeakageWarning) somLeakageWarning.textContent = status.target_leakage_warning || "Y sonuç değişkenleri SOM eğitim matrisine alınmaz; hedef sızıntısı engellenir.";
+  if (somLeakageWarning) somLeakageWarning.textContent = status.target_leakage_warning || "Y/result variables are not included in the SOM training matrix; target leakage is prevented.";
   renderSom();
   return status;
 }
@@ -1629,7 +1629,7 @@ async function trainSom() {
     somCanvas.innerHTML = `<div class="error-box">${escapeHtml(selectionError)}</div>`;
     return;
   }
-  somCanvas.innerHTML = `<div class="muted-box">SOM eğitiliyor...</div>`;
+  somCanvas.innerHTML = `<div class="muted-box">Training SOM...</div>`;
   somSummary.innerHTML = "";
   try {
     const response = await postJson("/api/som/train", {
@@ -1666,7 +1666,7 @@ async function optimizeSom() {
   const maxSize = Number(somMaxGrid?.value || 8);
   const iterations = Number(somIterations?.value || 800);
   if (minSize > maxSize) {
-    somCanvas.innerHTML = `<div class="error-box">Min grid, maks grid değerinden büyük olamaz.</div>`;
+    somCanvas.innerHTML = `<div class="error-box">Min grid cannot be greater than max grid.</div>`;
     return;
   }
   try {
@@ -1707,7 +1707,7 @@ function selectSomRepresentative() {
   const target = selectedSomClassTarget();
   const representative = computeSomRepresentative(latestSom, metricKey, metric, target);
   if (!representative) {
-    if (somDetails) somDetails.innerHTML = `<div class="muted-box">Temsilci seçilecek yeterli dolu hücre bulunamadı.</div>`;
+    if (somDetails) somDetails.innerHTML = `<div class="muted-box">Not enough occupied cells are available for representative selection.</div>`;
     return;
   }
   somRepresentativeView = representative;
@@ -1989,12 +1989,12 @@ async function selectHingeValidationSubset() {
 
 async function calibrateHingeProxy() {
   if (!calibrationStatus) return;
-  calibrationStatus.textContent = "SAP exportları okunuyor ve proxy kalibre ediliyor...";
+  calibrationStatus.textContent = "Reading SAP exports and calibrating the proxy...";
   try {
     const response = await postJson("/api/hinge-validation/calibrate", { config: collectConfig() }, 120000);
     const report = response.result?.report || {};
     const calibration = response.result?.calibration || {};
-    calibrationStatus.textContent = `Kalibrasyon tamamlandı. Eşleşen satır: ${report.matched_row_count || 0}/${report.exact_row_count || 0}. Durum doğruluğu: ${formatNumber(report.state_exact_match_rate)}. Kullanılabilir rotasyon: ${calibration.usable_rotation_count || 0}.`;
+    calibrationStatus.textContent = `Calibration completed. Matched rows: ${report.matched_row_count || 0}/${report.exact_row_count || 0}. State accuracy: ${formatNumber(report.state_exact_match_rate)}. Usable rotations: ${calibration.usable_rotation_count || 0}.`;
   } catch (error) {
     calibrationStatus.textContent = error.message;
   }
@@ -2068,7 +2068,7 @@ function renderMlStatus(status) {
       <div><span>Veri</span><b>${escapeHtml(status.sample_count || status.dataset_count || 0)}</b></div>
       <div><span>Model</span><b>${escapeHtml(status.algorithm || "KNN")}</b></div>
       <div><span>Model yapısı</span><b>Tek aşamalı</b></div>
-      <div><span>Seçili X parametresi</span><b>${escapeHtml((status.selected_x_columns || []).length || 0)}</b></div>
+      <div><span>Selected X parameters</span><b>${escapeHtml((status.selected_x_columns || []).length || 0)}</b></div>
       <div><span>Dosya</span><b>${escapeHtml(status.model_path || "")}</b></div>
     </div>
     ${status.feature_engineering_note ? `<div class="result-note">${escapeHtml(status.feature_engineering_note)}</div>` : ""}
@@ -2084,7 +2084,7 @@ function metricCard(target, metric) {
     <div class="ml-card">
       <b>${escapeHtml(targetLabel(target))}</b>
       <span>Accuracy: ${formatNumber(metric.accuracy)}</span>
-      <span>Test: ${escapeHtml(metric.test_count || 0)} kayıt</span>
+      <span>Test: ${escapeHtml(metric.test_count || 0)} records</span>
       <span>${metric.best_k ? `k: ${escapeHtml(metric.best_k)}` : ""}${metric.tree_count ? `Ağaç: ${escapeHtml(metric.tree_count)}` : ""}${metric.n_estimators ? `Estimator: ${escapeHtml(metric.n_estimators)}` : ""}</span>
     </div>
   `;
@@ -2093,18 +2093,18 @@ function metricCard(target, metric) {
 function targetLabel(target) {
   return {
     damage_class: "Damage class",
-    first_hinge_type: "İlk mafsal tipi",
-    critical_element_type: "Kritik eleman tipi",
-    critical_state: "Kritik seviye",
-    first_hinge_plan_zone: "İlk mafsal aks bölgesi",
-    critical_element_plan_zone: "Kritik eleman aks bölgesi",
-    first_hinge_story_group: "İlk mafsal kat grubu",
-    critical_element_story_group: "Kritik eleman kat grubu",
-    has_lscp: "LS-CP riski",
-    has_cp: "CP-C+ riski",
-    first_column_available: "İlk kolon mafsalı",
-    first_ls_available: "İlk LS seviyesi",
-    first_cp_available: "İlk CP seviyesi"
+    first_hinge_type: "First hinge type",
+    critical_element_type: "Critical element type",
+    critical_state: "Critical state",
+    first_hinge_plan_zone: "First hinge axis zone",
+    critical_element_plan_zone: "Critical element axis zone",
+    first_hinge_story_group: "First hinge story group",
+    critical_element_story_group: "Critical element story group",
+    has_lscp: "LS-CP risk",
+    has_cp: "CP-C+ risk",
+    first_column_available: "First column hinge",
+    first_ls_available: "First LS level",
+    first_cp_available: "First CP level"
   }[target] || target;
 }
 
@@ -2121,7 +2121,7 @@ function renderPrediction(result) {
       <div class="ml-metrics">
         ${Object.entries(result.directions).map(([direction, directionResult]) => renderDirectionPrediction(direction, directionResult)).join("")}
       </div>
-      <p class="section-note">Not: Eleman konumu, en yakın öğrenilmiş örneğin normalize plan/kat konumunun girilen geometriye projeksiyonudur; SAP2000 analizi yerine geçmez.</p>
+      <p class="section-note">Note: Element location is projected from the normalized plan/story location of the nearest learned sample onto the entered geometry; it does not replace SAP2000 analysis.</p>
     `;
     return;
   }
@@ -2151,27 +2151,27 @@ function renderDirectionPrediction(direction, result) {
   const firstCp = result.predicted_events?.first_cp || {};
   return `
     <div class="ml-card">
-      <b>${escapeHtml(direction)} yönü</b>
-      <span>İlk mafsal: ${escapeHtml(predictions.first_hinge_type?.prediction || "-")}</span>
+      <b>${escapeHtml(direction)} direction</b>
+      <span>First hinge: ${escapeHtml(predictions.first_hinge_type?.prediction || "-")}</span>
       <strong>${escapeHtml(first.element_name || "-")}</strong>
       <span>${predictionMeta(predictions.first_hinge_type, metrics.first_hinge_type)}</span>
-      <span>Kritik eleman: ${escapeHtml(predictions.critical_element_type?.prediction || "-")}</span>
+      <span>Critical element: ${escapeHtml(predictions.critical_element_type?.prediction || "-")}</span>
       <strong>${escapeHtml(critical.element_name || "-")}</strong>
       <span>${predictionMeta(predictions.critical_element_type, metrics.critical_element_type)}</span>
-      <span>Kritik seviye: ${escapeHtml(predictions.critical_state?.prediction || "-")} / ${predictionMeta(predictions.critical_state, metrics.critical_state)}</span>
-      <span>Hasar sınıfı: ${escapeHtml(predictions.damage_class?.prediction || "-")} / ${predictionMeta(predictions.damage_class, metrics.damage_class)}</span>
-      <span>İlk mafsal aksı: ${escapeHtml(predictions.first_hinge_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.first_hinge_plan_zone, metrics.first_hinge_plan_zone)}</span>
-      <span>Kritik aks: ${escapeHtml(predictions.critical_element_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.critical_element_plan_zone, metrics.critical_element_plan_zone)}</span>
-      <span>İlk mafsal kat grubu: ${escapeHtml(predictions.first_hinge_story_group?.prediction || "-")}</span>
-      <span>Kritik kat grubu: ${escapeHtml(predictions.critical_element_story_group?.prediction || "-")}</span>
-      <span>İlk kolon mafsalı: ${escapeHtml(predictions.first_column_available?.prediction || "-")}</span>
-      <strong>${escapeHtml(firstColumn.available === false ? "Ulaşmadı" : (firstColumn.element_name || "-"))}</strong>
+      <span>Critical state: ${escapeHtml(predictions.critical_state?.prediction || "-")} / ${predictionMeta(predictions.critical_state, metrics.critical_state)}</span>
+      <span>Damage class: ${escapeHtml(predictions.damage_class?.prediction || "-")} / ${predictionMeta(predictions.damage_class, metrics.damage_class)}</span>
+      <span>First hinge axis: ${escapeHtml(predictions.first_hinge_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.first_hinge_plan_zone, metrics.first_hinge_plan_zone)}</span>
+      <span>Critical axis: ${escapeHtml(predictions.critical_element_plan_zone?.prediction || "-")} / ${predictionMeta(predictions.critical_element_plan_zone, metrics.critical_element_plan_zone)}</span>
+      <span>First hinge story group: ${escapeHtml(predictions.first_hinge_story_group?.prediction || "-")}</span>
+      <span>Critical story group: ${escapeHtml(predictions.critical_element_story_group?.prediction || "-")}</span>
+      <span>First column hinge: ${escapeHtml(predictions.first_column_available?.prediction || "-")}</span>
+      <strong>${escapeHtml(firstColumn.available === false ? "Not reached" : (firstColumn.element_name || "-"))}</strong>
       <span>${predictionMeta(predictions.first_column_available, metrics.first_column_available)}</span>
-      <span>İlk LS seviyesi: ${escapeHtml(predictions.first_ls_available?.prediction || "-")}</span>
-      <strong>${escapeHtml(firstLs.available === false ? "Ulaşmadı" : (firstLs.element_name || "-"))}</strong>
+      <span>First LS level: ${escapeHtml(predictions.first_ls_available?.prediction || "-")}</span>
+      <strong>${escapeHtml(firstLs.available === false ? "Not reached" : (firstLs.element_name || "-"))}</strong>
       <span>${predictionMeta(predictions.first_ls_available, metrics.first_ls_available)}</span>
-      <span>İlk CP seviyesi: ${escapeHtml(predictions.first_cp_available?.prediction || "-")}</span>
-      <strong>${escapeHtml(firstCp.available === false ? "Ulaşmadı" : (firstCp.element_name || "-"))}</strong>
+      <span>First CP level: ${escapeHtml(predictions.first_cp_available?.prediction || "-")}</span>
+      <strong>${escapeHtml(firstCp.available === false ? "Not reached" : (firstCp.element_name || "-"))}</strong>
       <span>${predictionMeta(predictions.first_cp_available, metrics.first_cp_available)}</span>
       <span>LS-CP: ${escapeHtml(predictions.has_lscp?.prediction || "-")} / ${predictionMeta(predictions.has_lscp, metrics.has_lscp)}</span>
       <span>CP-C+: ${escapeHtml(predictions.has_cp?.prediction || "-")} / ${predictionMeta(predictions.has_cp, metrics.has_cp)}</span>
@@ -2250,15 +2250,15 @@ function renderHighlightedPreview(model) {
   ].join("");
   const highlightSvg = highlights.map((item) => previewHighlightSvg(item, px, py, ex, ey, totalX, totalY)).join("");
   const legend = highlights.length
-    ? `<g class="preview-legend"><line class="preview-highlight-line highlight-x-critical" x1="16" y1="221" x2="28" y2="221"></line><text x="34" y="224">X kritik</text><line class="preview-highlight-line highlight-x-first" x1="92" y1="221" x2="104" y2="221"></line><text x="110" y="224">X ilk</text><line class="preview-highlight-line highlight-y-critical" x1="158" y1="221" x2="170" y2="221"></line><text x="176" y="224">Y kritik</text><line class="preview-highlight-line highlight-y-first" x1="234" y1="221" x2="246" y2="221"></line><text x="252" y="224">Y ilk</text></g>`
-    : `<text class="preview-meta-svg" x="12" y="224">Plastik mafsal olusmadi</text>`;
+    ? `<g class="preview-legend"><line class="preview-highlight-line highlight-x-critical" x1="16" y1="221" x2="28" y2="221"></line><text x="34" y="224">X critical</text><line class="preview-highlight-line highlight-x-first" x1="104" y1="221" x2="116" y2="221"></line><text x="122" y="224">X first</text><line class="preview-highlight-line highlight-y-critical" x1="178" y1="221" x2="190" y2="221"></line><text x="196" y="224">Y critical</text><line class="preview-highlight-line highlight-y-first" x1="270" y1="221" x2="282" y2="221"></line><text x="288" y="224">Y first</text></g>`
+    : `<text class="preview-meta-svg" x="12" y="224">No plastic hinge formed</text>`;
   return `
-    <svg class="highlight-preview" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Model temsil goruntusu">
+    <svg class="highlight-preview" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Model representative view">
       ${previewSvgEmbeddedStyle()}
       <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="6"></rect>
       <text class="preview-title-svg" x="10" y="18">${escapeHtml(storyCount)}Story X${escapeHtml(spansX.length)} Y${escapeHtml(spansY.length)}</text>
       <text class="preview-label" x="${plan.x}" y="31">Plan</text>
-      <text class="preview-label" x="${elev.x}" y="31">Elevasyon</text>
+      <text class="preview-label" x="${elev.x}" y="31">Elevation</text>
       ${grid}
       ${highlightSvg}
       <line class="preview-height-arrow" x1="${elev.x + elev.w + 17}" y1="${elev.y + elev.h}" x2="${elev.x + elev.w + 17}" y2="${elev.y}"></line>
@@ -2462,7 +2462,7 @@ function renderPushoverResults(models, emptyMessage = "") {
   if (!pushoverResults) return;
   pushoverResults.innerHTML = "";
   if (!models.length) {
-    pushoverResults.innerHTML = `<div class="preview-item"><div class="preview-meta">${escapeHtml(emptyMessage || "Henüz pushover sonucu yok.")}</div></div>`;
+    pushoverResults.innerHTML = `<div class="preview-item"><div class="preview-meta">${escapeHtml(emptyMessage || "No pushover result yet.")}</div></div>`;
     return;
   }
   models.slice(0, 12).forEach((model) => {
@@ -2470,25 +2470,25 @@ function renderPushoverResults(models, emptyMessage = "") {
     card.className = "result-card";
     const curves = model.curves || {};
     const curveBlocks = Object.entries(curves).map(([direction, curve]) => renderCurveBlock(direction, curve, model.story_drifts, model.fema440?.[direction])).join("");
-    const statusText = model.status === "success" ? "Başarılı" : `Durum: ${model.status || "-"}`;
+    const statusText = model.status === "success" ? "Successful" : `Status: ${model.status || "-"}`;
     const hingeBlocks = renderHingeInfo(model);
-    const hingeText = `${model.hinge_assigned_count ?? 0}/${model.hinge_expected_count ?? 0} mafsal`;
+    const hingeText = `${model.hinge_assigned_count ?? 0}/${model.hinge_expected_count ?? 0} hinges`;
     const hasProxyHinges = !model.exact_export_available && Object.keys(model.hinge_summary || {}).length > 0;
     const hingeSourceText = model.exact_export_available
-      ? "Mafsal özeti: gerçek SAP Frame Hinge States exportu"
+      ? "Hinge summary: actual SAP Frame Hinge States export"
       : hasProxyHinges
-        ? "Mafsal özeti: proxy hinge hesabı (moment/kapasite ve kalibre edilebilir rotasyon backbone'u)"
-        : "Mafsal özeti henüz okunmadı";
+        ? "Hinge summary: proxy hinge calculation (moment/capacity and calibratable rotation backbone)"
+        : "Hinge summary has not been read yet";
     card.innerHTML = `
       <div class="result-head">
         <div>
           <div class="preview-title">${escapeHtml(model.name)}</div>
-          <div class="preview-meta">${escapeHtml(statusText)} / ${escapeHtml(hingeText)} / hedef ${formatNumber(model.target_displacement_m)} m</div>
+          <div class="preview-meta">${escapeHtml(statusText)} / ${escapeHtml(hingeText)} / target ${formatNumber(model.target_displacement_m)} m</div>
           <div class="preview-meta">${escapeHtml(hingeSourceText)}</div>
         </div>
-        <button type="button" class="open-model-btn" data-model-name="${escapeHtml(model.model_file || model.name)}">SAP2000'de Aç</button>
+        <button type="button" class="open-model-btn" data-model-name="${escapeHtml(model.model_file || model.name)}">Open in SAP2000</button>
       </div>
-      ${curveBlocks || `<div class="preview-meta">${escapeHtml(model.message || "Kapasite eğrisi henüz okunmadı.")}</div>`}
+      ${curveBlocks || `<div class="preview-meta">${escapeHtml(model.message || "Capacity curve has not been read yet.")}</div>`}
       ${hingeBlocks}
     `;
     const button = card.querySelector(".open-model-btn");
@@ -2505,8 +2505,8 @@ function renderCurveBlock(direction, curve, storyDrifts = {}, fema440 = null) {
   if (!curve.available || !points.length) {
     return `
       <div class="curve-block">
-        <div class="curve-title">${escapeHtml(direction)} yönü</div>
-        <div class="preview-meta">Sonuç noktası yok. ${message}</div>
+        <div class="curve-title">${escapeHtml(direction)} direction</div>
+        <div class="preview-meta">No result point. ${message}</div>
         ${driftBlock}
         ${femaBlock}
       </div>
@@ -2514,7 +2514,7 @@ function renderCurveBlock(direction, curve, storyDrifts = {}, fema440 = null) {
   }
   return `
     <div class="curve-block">
-      <div class="curve-title">${escapeHtml(direction)} yönü / tepe ${formatNumber(curve.peak_base_shear_kn)} kN / son ${formatNumber(curve.final_control_displacement_m)} m</div>
+      <div class="curve-title">${escapeHtml(direction)} direction / peak ${formatNumber(curve.peak_base_shear_kn)} kN / final ${formatNumber(curve.final_control_displacement_m)} m</div>
       ${renderStepInfoTable(points)}
       ${driftBlock}
       ${femaBlock}
@@ -2527,8 +2527,8 @@ function renderFema440Block(fema) {
   if (!fema.available) {
     return `
       <div class="info-block">
-        <div class="info-title">FEMA 440 ön değerlendirme</div>
-        <div class="preview-meta">${escapeHtml(fema.message || "Hesaplanamadı.")}</div>
+        <div class="info-title">FEMA 440 preliminary assessment</div>
+        <div class="preview-meta">${escapeHtml(fema.message || "Could not be calculated.")}</div>
       </div>
     `;
   }
@@ -2540,10 +2540,10 @@ function renderFema440Block(fema) {
       <div class="info-title">FEMA 440 Equivalent Linearization</div>
       <table class="info-table">
         <tbody>
-          <tr><th>${femaParamLabel("Yield deplasmanı", "Kapasite eğrisinde elastik davranıştan plastik davranışa geçiş için yaklaşık tepe deplasmanı.")}</th><td>${formatNumber(ideal.yield_displacement_m)} m</td><th>${femaParamLabel("Yield taban kesmesi", "Yield noktasında yapının taşıdığı yaklaşık toplam yatay taban kesmesi.")}</th><td>${formatNumber(ideal.yield_base_shear_kn)} kN</td></tr>
-          <tr><th>${femaParamLabel("Süneklik μ", "Nihai/son deplasmanın yield deplasmanına oranı; plastik deformasyon kapasitesini özetler.")}</th><td>${formatNumber(el.ductility_mu)}</td><th>${femaParamLabel("T<sub>eff</sub>/T<sub>0</sub>", "Hasar ve rijitlik azalımı sonrası etkin periyodun başlangıç periyoduna göre büyümesini gösterir.")}</th><td>${formatNumber(el.effective_period_ratio_teff_t0)}</td></tr>
-          <tr><th>${femaParamLabel("T<sub>0</sub> proxy", "İlk elastik periyot için kullanılan yaklaşık başlangıç değeri; burada kat sayısından türetilen ön kabul.")}</th><td>${formatNumber(el.initial_period_proxy_s)} s</td><th>${femaParamLabel("T<sub>eff</sub>", "Eşdeğer lineerleştirmede kullanılan hasarlı/etkin periyot; rijitlik azaldıkça genellikle artar.")}</th><td>${formatNumber(el.effective_period_teff_s)} s</td></tr>
-          <tr><th>${femaParamLabel("β<sub>eff</sub>", "Histeretik enerji tüketimini temsil eden etkin sönüm oranı; daha büyük değer daha fazla enerji tüketimi demektir.")}</th><td>${formatNumber(el.effective_damping_beta_percent)}%</td><th>${femaParamLabel("B(β)", "Etkin sönüme bağlı spektral azaltma/düzeltme katsayısı; talep spektrumunu uyarlamak için kullanılır.")}</th><td>${formatNumber(el.damping_reduction_factor_b_beta)}</td></tr>
+          <tr><th>${femaParamLabel("Yield displacement", "Approximate roof displacement at the transition from elastic to plastic behavior on the capacity curve.")}</th><td>${formatNumber(ideal.yield_displacement_m)} m</td><th>${femaParamLabel("Yield base shear", "Approximate total lateral base shear carried by the structure at the yield point.")}</th><td>${formatNumber(ideal.yield_base_shear_kn)} kN</td></tr>
+          <tr><th>${femaParamLabel("Ductility μ", "Ratio of final displacement to yield displacement; summarizes plastic deformation capacity.")}</th><td>${formatNumber(el.ductility_mu)}</td><th>${femaParamLabel("T<sub>eff</sub>/T<sub>0</sub>", "Increase of the effective period relative to the initial period after damage and stiffness degradation.")}</th><td>${formatNumber(el.effective_period_ratio_teff_t0)}</td></tr>
+          <tr><th>${femaParamLabel("T<sub>0</sub> proxy", "Approximate initial elastic-period proxy derived from the story count.")}</th><td>${formatNumber(el.initial_period_proxy_s)} s</td><th>${femaParamLabel("T<sub>eff</sub>", "Damaged/effective period used in equivalent linearization; generally increases as stiffness decreases.")}</th><td>${formatNumber(el.effective_period_teff_s)} s</td></tr>
+          <tr><th>${femaParamLabel("β<sub>eff</sub>", "Effective damping ratio representing hysteretic energy dissipation; larger values indicate higher energy dissipation.")}</th><td>${formatNumber(el.effective_damping_beta_percent)}%</td><th>${femaParamLabel("B(β)", "Spectral reduction/modification factor based on effective damping; used to adjust demand spectra.")}</th><td>${formatNumber(el.damping_reduction_factor_b_beta)}</td></tr>
         </tbody>
       </table>
       <div class="result-note">${escapeHtml(el.message || fema.method_note || "")}</div>
@@ -2552,10 +2552,10 @@ function renderFema440Block(fema) {
       <div class="info-title">FEMA 440 Displacement Modification</div>
       <table class="info-table">
         <tbody>
-          <tr><th>${femaParamLabel("Zemin/site proxy", "TBDY zemin sınıfından yaklaşık FEMA katsayı sınıfına geçiştir; gerçek zemin spektrumu yerine ön kabul olarak kullanılır.")}</th><td>${escapeHtml(dm.coefficient_site_class || "-")} / a=${formatNumber(dm.site_coefficient_a)}</td><th>${femaParamLabel("R proxy", "Elastik talep/kapasite oranını temsil eden yaklaşık katsayı; burada kapasite eğrisinden türetilir.")}</th><td>${formatNumber(dm.r_capacity_proxy)}</td></tr>
-          <tr><th>${femaParamLabel("C0", "SDOF deplasmanını çatı/tepe deplasmanına dönüştüren katsayı; bu aşamada 1.0 ön kabulü kullanılır.")}</th><td>${formatNumber(dm.c0)}</td><th>${femaParamLabel("C1", "İnelastik deplasmanın elastik deplasmana göre artışını düzeltir; kısa periyot ve yüksek R durumunda büyür.")}</th><td>${formatNumber(dm.c1)}</td></tr>
-          <tr><th>${femaParamLabel("C2", "Çevrimsel dayanım/rijitlik bozulması ve histeretik şekil etkisini temsil eder; bu ön hesapta 1.0 alınır.")}</th><td>${formatNumber(dm.c2)}</td><th>${femaParamLabel("C3", "P-Delta etkileri nedeniyle deplasman büyümesini temsil eder; bu ön hesapta 1.0 alınır.")}</th><td>${formatNumber(dm.c3)}</td></tr>
-          <tr><th>${femaParamLabel("Elastik depl. proxy", "Spektral talep yerine kapasite eğrisinden türetilmiş yaklaşık elastik deplasman göstergesi.")}</th><td>${formatNumber(dm.elastic_displacement_proxy_m)} m</td><th>${femaParamLabel("Hedef depl. proxy", "C0-C3 katsayıları uygulanmış yaklaşık hedef deplasman; gerçek FEMA hedef deplasmanı için talep spektrumu gerekir.")}</th><td>${formatNumber(dm.target_displacement_proxy_m)} m</td></tr>
+          <tr><th>${femaParamLabel("Soil/site proxy", "Approximate conversion from TBDY soil class to a FEMA coefficient class; used as a preliminary assumption instead of a site-specific demand spectrum.")}</th><td>${escapeHtml(dm.coefficient_site_class || "-")} / a=${formatNumber(dm.site_coefficient_a)}</td><th>${femaParamLabel("R proxy", "Approximate elastic demand-to-capacity coefficient derived from the capacity curve.")}</th><td>${formatNumber(dm.r_capacity_proxy)}</td></tr>
+          <tr><th>${femaParamLabel("C0", "Coefficient converting SDOF displacement to roof displacement; a preliminary value of 1.0 is used at this stage.")}</th><td>${formatNumber(dm.c0)}</td><th>${femaParamLabel("C1", "Modification for inelastic displacement relative to elastic displacement; increases for short periods and high R values.")}</th><td>${formatNumber(dm.c1)}</td></tr>
+          <tr><th>${femaParamLabel("C2", "Represents cyclic strength/stiffness degradation and hysteretic shape effects; taken as 1.0 in this preliminary calculation.")}</th><td>${formatNumber(dm.c2)}</td><th>${femaParamLabel("C3", "Represents displacement amplification due to P-Delta effects; taken as 1.0 in this preliminary calculation.")}</th><td>${formatNumber(dm.c3)}</td></tr>
+          <tr><th>${femaParamLabel("Elastic disp. proxy", "Approximate elastic displacement indicator derived from the capacity curve instead of a demand spectrum.")}</th><td>${formatNumber(dm.elastic_displacement_proxy_m)} m</td><th>${femaParamLabel("Target disp. proxy", "Approximate target displacement after applying C0-C3 coefficients; a real FEMA target displacement requires a demand spectrum.")}</th><td>${formatNumber(dm.target_displacement_proxy_m)} m</td></tr>
         </tbody>
       </table>
       <div class="result-note">${escapeHtml(dm.message || "")}</div>
@@ -2588,9 +2588,9 @@ function renderStoryDriftBlock(direction, storyDrifts = {}) {
   }).join("");
   return `
     <div class="info-block">
-      <div class="info-title">Göreli kat ötelemesi ${max ? `/ max kat ${escapeHtml(max.story ?? "-")} · ${formatPercent(max.drift_ratio)}` : ""}</div>
+      <div class="info-title">Interstory drift ${max ? `/ max story ${escapeHtml(max.story ?? "-")} / ${formatPercent(max.drift_ratio)}` : ""}</div>
       <table class="info-table drift-table">
-        <thead><tr><th>Kat</th><th>Step</th><th>Alt depl. m</th><th>Üst depl. m</th><th>Göreli depl. m</th><th>Drift</th></tr></thead>
+        <thead><tr><th>Story</th><th>Step</th><th>Lower disp. m</th><th>Upper disp. m</th><th>Relative disp. m</th><th>Drift</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
@@ -2609,7 +2609,7 @@ function renderStepInfoTable(points) {
   `).join("");
   return `
     <div class="info-block">
-      <div class="info-title">Adim bilgileri</div>
+      <div class="info-title">Step information</div>
       <table class="info-table">
         <thead><tr><th>Step number</th><th>Load step</th><th>Roof displacement m</th><th>Base shear kN</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -2624,7 +2624,7 @@ function renderHingeInfo(model) {
   const samples = model.hinge_event_samples || {};
   return summaries.map(([direction, summary]) => `
     <div class="info-block">
-      <div class="info-title">${escapeHtml(direction)} plastik mafsal bilgileri / ${escapeHtml(model.hinge_event_counts?.[direction] ?? summary.event_count ?? 0)} kayıt</div>
+      <div class="info-title">${escapeHtml(direction)} plastic hinge information / ${escapeHtml(model.hinge_event_counts?.[direction] ?? summary.event_count ?? 0)} records</div>
       ${renderDamageSummary(summary)}
       ${renderMilestonesOrEnvelopeNote(summary, samples[direction] || [])}
       ${renderStateCounts(summary.state_counts || {})}
@@ -2643,13 +2643,13 @@ function renderDamageSummary(summary) {
   const firstLs = summary.first_ls_level;
   const firstCp = summary.first_cp_level;
   return `
-    <div class="damage-summary-title">Hasar Özeti</div>
+    <div class="damage-summary-title">Damage Summary</div>
     <div class="damage-summary">
-      <div><span>LS-CP</span><b>${formatNumber(lsCount)} olay</b></div>
-      <div><span>CP-C</span><b>${formatNumber(cpCount)} olay</b></div>
-      <div><span>İlk LS</span><b>${firstLs ? `step ${formatNumber(firstLs.step_number)}` : "Ulaşmadı"}</b></div>
-      <div><span>İlk CP</span><b>${firstCp ? `step ${formatNumber(firstCp.step_number)}` : "Ulaşmadı"}</b></div>
-      <div><span>Kritik eleman</span><b>${critical ? `${escapeHtml(critical.element_type || "-")} / ${escapeHtml(critical.hinge_state_level || "-")}` : "-"}</b><small>${critical ? escapeHtml(critical.element_name || "-") : ""}</small></div>
+      <div><span>LS-CP</span><b>${formatNumber(lsCount)} events</b></div>
+      <div><span>CP-C</span><b>${formatNumber(cpCount)} events</b></div>
+      <div><span>First LS</span><b>${firstLs ? `step ${formatNumber(firstLs.step_number)}` : "Not reached"}</b></div>
+      <div><span>First CP</span><b>${firstCp ? `step ${formatNumber(firstCp.step_number)}` : "Not reached"}</b></div>
+      <div><span>Critical element</span><b>${critical ? `${escapeHtml(critical.element_type || "-")} / ${escapeHtml(critical.hinge_state_level || "-")}` : "-"}</b><small>${critical ? escapeHtml(critical.element_name || "-") : ""}</small></div>
     </div>
   `;
 }
@@ -2661,20 +2661,20 @@ function renderMilestonesOrEnvelopeNote(summary, sampleEvents) {
   if (envelopeOnly) {
     return `
       <div class="milestone-grid">
-        ${statusMilestone("İlk plastik mafsal", "Okunamadı", "SAP2000 sadece Max/Min envelope sonucu verdi.")}
-        ${statusMilestone("İlk kolon mafsalı", "Okunamadı", "Gerçek adım geçmişi yok.")}
-        ${statusMilestone("İlk LS seviyesi", "Okunamadı", "Gerçek adım geçmişi yok.")}
-        ${statusMilestone("İlk CP seviyesi", "Okunamadı", "Gerçek adım geçmişi yok.")}
+        ${statusMilestone("First plastic hinge", "Unread", "SAP2000 returned only the Max/Min envelope result.")}
+        ${statusMilestone("First column hinge", "Unread", "No actual step history is available.")}
+        ${statusMilestone("First LS level", "Unread", "No actual step history is available.")}
+        ${statusMilestone("First CP level", "Unread", "No actual step history is available.")}
       </div>
-      <div class="result-note">Alttaki tablo kritik eleman proxy bilgisidir; ilk oluşum adımı olarak yorumlanmamalıdır.</div>
+      <div class="result-note">The table below shows critical-element proxy information; it should not be interpreted as the first occurrence step.</div>
     `;
   }
   return `
     <div class="milestone-grid">
-      ${milestoneItem("İlk plastik mafsal", summary.first_plastic_hinge, "Ulaşmadı")}
-      ${milestoneItem("İlk kolon mafsalı", summary.first_column_hinge, "Ulaşmadı")}
-      ${milestoneItem("İlk LS seviyesi", summary.first_ls_level, "Ulaşmadı")}
-      ${milestoneItem("İlk CP seviyesi", summary.first_cp_level, "Ulaşmadı")}
+      ${milestoneItem("First plastic hinge", summary.first_plastic_hinge, "Not reached")}
+      ${milestoneItem("First column hinge", summary.first_column_hinge, "Not reached")}
+      ${milestoneItem("First LS level", summary.first_ls_level, "Not reached")}
+      ${milestoneItem("First CP level", summary.first_cp_level, "Not reached")}
     </div>
   `;
 }
@@ -2685,9 +2685,9 @@ function isEnvelopeEvent(event) {
   return Number(event.step_number) === 0 && ["max", "min", "envelope"].includes(loadStep);
 }
 
-function milestoneItem(label, event, emptyStatus = "Ulaşmadı") {
+function milestoneItem(label, event, emptyStatus = "Not reached") {
   if (!event) {
-    return statusMilestone(label, emptyStatus, "Bu eşik analiz adımları içinde görülmedi.");
+    return statusMilestone(label, emptyStatus, "This threshold was not observed within the analysis steps.");
   }
   const loadStep = event.load_step || "-";
   const stepText = Number(event.step_number) === 0 && ["Max", "Min", "Envelope"].includes(String(loadStep))
@@ -2720,7 +2720,7 @@ function renderStateCounts(counts) {
 
 function renderHingeSampleTable(events) {
   const plasticEvents = events.filter((event) => event && hingeStateRank(event.hinge_state_level) >= hingeStateRank("B-IO"));
-  if (!plasticEvents.length) return '<div class="preview-meta">Plastik mafsal oluşmadı.</div>';
+  if (!plasticEvents.length) return '<div class="preview-meta">No plastic hinge formed.</div>';
   const rows = plasticEvents.slice(0, 8).map((event) => `
     <tr>
       <td>${escapeHtml(event.step_number ?? "-")}</td>
@@ -2736,9 +2736,9 @@ function renderHingeSampleTable(events) {
     </tr>
   `).join("");
   return `
-    <div class="info-title">Kritik mafsal olayları</div>
+    <div class="info-title">Critical hinge events</div>
     <table class="info-table hinge-table">
-      <thead><tr><th>Step</th><th>Load</th><th>Eleman</th><th>Tip</th><th>Konum</th><th>Seviye</th><th>Rot.</th><th>M</th><th>P</th><th>V2/V3</th></tr></thead>
+      <thead><tr><th>Step</th><th>Load</th><th>Element</th><th>Type</th><th>Location</th><th>State</th><th>Rot.</th><th>M</th><th>P</th><th>V2/V3</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -2769,13 +2769,13 @@ function renderSom() {
   const max = Math.max(...coloredValues, 1);
 
   somSummary.innerHTML = `
-    <div><span>Kayıt</span><b>${escapeHtml(som.sample_count || 0)}</b></div>
+    <div><span>Records</span><b>${escapeHtml(som.sample_count || 0)}</b></div>
     <div><span>Grid</span><b>${escapeHtml(som.width)} x ${escapeHtml(som.height)}</b></div>
-    <div><span>Dolu hücre</span><b>${cells.filter((cell) => Number(cell.hit_count || 0) > 0).length} / ${cells.length}</b></div>
+    <div><span>Occupied cells</span><b>${cells.filter((cell) => Number(cell.hit_count || 0) > 0).length} / ${cells.length}</b></div>
     <div><span>Quantization error</span><b>${formatNumber(som.quantization_error)}</b></div>
     <div><span>Topographic error</span><b>${formatNumber(som.topographic_error)}</b></div>
     <div><span>Purity</span><b>${som.purity === null || som.purity === undefined ? "-" : formatPercent(som.purity)}</b></div>
-    <div><span>X parametre</span><b>${escapeHtml((som.selected_x_columns || []).length || 0)}</b></div>
+    <div><span>X parameters</span><b>${escapeHtml((som.selected_x_columns || []).length || 0)}</b></div>
     <div><span>Renk</span><b>${escapeHtml(metric.label || metricKey)}</b></div>
     ${som.optimization?.available ? `<div><span>Optimum grid</span><b>${escapeHtml(som.optimization.selected_width)} x ${escapeHtml(som.optimization.selected_height)}</b></div>` : ""}
     ${som.optimization?.available ? `<div><span>Denenen aralık</span><b>${escapeHtml(som.optimization.start_size)} - ${escapeHtml(som.optimization.max_size)}</b></div>` : ""}
@@ -2784,10 +2784,10 @@ function renderSom() {
 
   const gridStyle = `grid-template-columns: repeat(${Number(som.width || 1)}, minmax(54px, 1fr));`;
   const lowOccupancyNote = Number(som.sample_count || 0) < cells.length / 2
-    ? `Bu haritada kayıt sayısı hücre sayısına göre düşük. Daha okunur kümeler için ${Math.max(2, Math.ceil(Math.sqrt(Number(som.sample_count || 1))))}x${Math.max(2, Math.ceil(Math.sqrt(Number(som.sample_count || 1))))} gibi daha küçük grid deneyebilirsin.`
+    ? `The record count is low relative to the number of cells in this map. For more readable clusters, try a smaller grid such as ${Math.max(2, Math.ceil(Math.sqrt(Number(som.sample_count || 1))))}x${Math.max(2, Math.ceil(Math.sqrt(Number(som.sample_count || 1))))}.`
     : "";
   const representativeNote = somRepresentativeView
-    ? `Temsilci seçim aktif: (${somRepresentativeView.cell.x},${somRepresentativeView.cell.y}) hücresi ve komşuluk bölgesi gösteriliyor. Dolu hücre ortalamasının altında kalan hücreler aday dışı bırakıldı.`
+    ? `Representative selection is active: cell (${somRepresentativeView.cell.x},${somRepresentativeView.cell.y}) and its neighborhood are shown. Cells below the occupied-cell average were excluded from candidacy.`
     : "";
   somCanvas.innerHTML = `
     ${renderSomOptimizationBlock(som.optimization)}
@@ -2816,7 +2816,7 @@ function renderSomClassOptions(metricKey, metric) {
   toggleSomNumericBinInputs(metric);
   latestSomClassTargets = buildSomClassTargets(rows, metricKey, metric);
   if (!latestSomClassTargets.length) {
-    somClassTarget.innerHTML = `<option value="">Veri yok</option>`;
+    somClassTarget.innerHTML = `<option value="">No data</option>`;
     return;
   }
   const current = somClassTarget.value;
@@ -2831,23 +2831,23 @@ function regressionMetricCard(target, metric) {
       <span>MAE: ${formatNumber(metric.mae)}</span>
       <span>RMSE: ${formatNumber(metric.rmse)}</span>
       <span>R²: ${formatNumber(metric.r2)}</span>
-      <span>Test: ${escapeHtml(metric.test_count || 0)} kayıt</span>
+      <span>Test: ${escapeHtml(metric.test_count || 0)} records</span>
     </div>
   `;
 }
 
 function regressionTargetLabel(target) {
   return {
-    peak_base_shear: "Maksimum taban kesmesi",
-    max_rotation: "Maksimum plastik rotasyon",
-    max_story_drift_ratio: "Maksimum göreli kat ötelenmesi",
-    max_displacement: "Tepe deplasmanı",
-    first_hinge_story: "İlk plastik mafsal katı",
-    critical_element_story: "Kritik eleman katı",
-    fema_target_capacity_ratio: "FEMA 440 hedef/kapasite oranı",
-    fema_ductility_mu: "FEMA 440 süneklik μ",
-    fema_beta_eff_percent: "FEMA 440 etkin sönüm",
-    fema_target_displacement_proxy: "FEMA 440 hedef deplasman proxy"
+    peak_base_shear: "Maximum base shear",
+    max_rotation: "Maximum plastic rotation",
+    max_story_drift_ratio: "Maximum interstory drift",
+    max_displacement: "Roof displacement",
+    first_hinge_story: "First plastic hinge story",
+    critical_element_story: "Critical element story",
+    fema_target_capacity_ratio: "FEMA 440 target/capacity ratio",
+    fema_ductility_mu: "FEMA 440 ductility μ",
+    fema_beta_eff_percent: "FEMA 440 effective damping",
+    fema_target_displacement_proxy: "FEMA 440 target displacement proxy"
   }[target] || target;
 }
 
@@ -2865,12 +2865,12 @@ function renderSomClassAnalysis(metricKey = somResultMetric?.value || latestSom?
   const metrics = latestSom?.result_metrics || defaultSomMetrics;
   const resolvedMetric = metric || metrics[metricKey] || defaultSomMetrics.critical_state;
   if (!rows.length) {
-    somClassAnalysis.innerHTML = `<div class="muted-box">SOM sınıf analizi için ham kayıt bulunamadı. SOM'u yeniden eğitmek gerekebilir.</div>`;
+    somClassAnalysis.innerHTML = `<div class="muted-box">No raw records were found for SOM class analysis. Retraining the SOM may be required.</div>`;
     return;
   }
   const target = latestSomClassTargets.find((item) => item.id === somClassTarget?.value) || latestSomClassTargets[0];
   if (!target) {
-    somClassAnalysis.innerHTML = `<div class="muted-box">Seçili sonuç için sınıf/aralık üretilemedi.</div>`;
+    somClassAnalysis.innerHTML = `<div class="muted-box">No class/interval could be generated for the selected result.</div>`;
     return;
   }
   let activeTarget = target;
@@ -2882,7 +2882,7 @@ function renderSomClassAnalysis(metricKey = somResultMetric?.value || latestSom?
   }
   const otherRows = rows.filter((row) => !somRowMatchesTarget(row, activeTarget, metricKey));
   if (!selectedRows.length) {
-    somClassAnalysis.innerHTML = `<div class="muted-box">Seçili sınıf/aralık için kayıt bulunamadı.</div>`;
+    somClassAnalysis.innerHTML = `<div class="muted-box">No records were found for the selected class/interval.</div>`;
     return;
   }
   const features = latestSom?.selected_x_columns || [];
@@ -2892,25 +2892,25 @@ function renderSomClassAnalysis(metricKey = somResultMetric?.value || latestSom?
   const pureDense = summarizeSomPureDenseCells(selectedRows, rows, features);
   somClassAnalysis.innerHTML = `
     <div class="som-class-summary">
-      <div><span>Seçili sınıf / aralık</span><b>${escapeHtml(activeTarget.label)}</b></div>
-      <div><span>Kayıt</span><b>${escapeHtml(selectedRows.length)}</b></div>
-      <div><span>Diğer kayıt</span><b>${escapeHtml(otherRows.length)}</b></div>
-      <div><span>Hücre</span><b>${escapeHtml(countUniqueCells(selectedRows))}</b></div>
+      <div><span>Selected class / interval</span><b>${escapeHtml(activeTarget.label)}</b></div>
+      <div><span>Records</span><b>${escapeHtml(selectedRows.length)}</b></div>
+      <div><span>Other records</span><b>${escapeHtml(otherRows.length)}</b></div>
+      <div><span>Cells</span><b>${escapeHtml(countUniqueCells(selectedRows))}</b></div>
     </div>
     <div class="som-analysis-block">
-      <b>A. Seçilen sınıf vs diğer tüm sınıflar</b>
-      <p class="section-note">Aşağıda seçilen sınıfa düşen kayıtların X parametre profili, diğer tüm kayıtlarla karşılaştırılır. Skor büyüdükçe ayırt edicilik artar.</p>
+      <b>A. Selected class vs all other classes</b>
+      <p class="section-note">The X-parameter profile of the selected class is compared with all remaining records. Higher scores indicate stronger discrimination.</p>
       ${renderSomFeatureComparisonTable(featureRows)}
     </div>
     <div class="som-analysis-block">
-      <b>B. Seçilen sınıfın kendi içindeki alt davranış grupları</b>
-      <p class="section-note">Aynı sonuca farklı SOM bölgelerinde ulaşılan her hücre ayrı değerlendirilir. Böylece aynı performans düzeyine farklı yapısal mekanizmalarla gidilmiş olabilecek tüm hücrelerin temsilci özellikleri tek tek görülebilir.</p>
+      <b>B. Sub-behavior groups within the selected class</b>
+      <p class="section-note">Each cell that reaches the same result in a different SOM region is evaluated separately, revealing representative features of possible alternative structural mechanisms.</p>
       ${renderSomMergedGroups(mergedGroups)}
       ${renderSomSubgroups(subgroups)}
     </div>
     <div class="som-analysis-block">
-      <b>C. En saf ve en yoğun SOM hücreleri</b>
-      <p class="section-note">Seçilen sınıfın hem temsil gücü yüksek hem de örnek sayısı yoğun hücreleri ayrıca işaretlenir. Ortak kalan sürücüler etkili parametreler olarak yorumlanabilir.</p>
+      <b>C. Purest and densest SOM cells</b>
+      <p class="section-note">Cells with both high representativeness and high record density for the selected class are highlighted. Shared drivers can be interpreted as influential parameters.</p>
       ${renderSomPureDense(pureDense)}
     </div>
   `;
@@ -2980,7 +2980,7 @@ function buildSomClassTargets(rows, metricKey, metric) {
 function scheduleSomClassAnalysisRender() {
   window.clearTimeout(somClassRenderTimer);
   if (somClassAnalysis) {
-    somClassAnalysis.innerHTML = `<div class="muted-box">Seçilen sınıf/aralık hesaplanıyor...</div>`;
+    somClassAnalysis.innerHTML = `<div class="muted-box">Calculating the selected class/interval...</div>`;
   }
   somClassRenderTimer = window.setTimeout(() => renderSomClassAnalysis(), 0);
 }
@@ -3221,10 +3221,10 @@ function summarizeSomPureDenseCells(selectedRows, allRows, features) {
 }
 
 function renderSomFeatureComparisonTable(rows) {
-  if (!rows.length) return `<p class="section-note">Karşılaştırma için yeterli ayırıcı X parametresi bulunamadı.</p>`;
+  if (!rows.length) return `<p class="section-note">No sufficiently discriminative X parameters were found for comparison.</p>`;
   return `
     <table class="info-table">
-      <thead><tr><th>Parametre</th><th>Seçili sınıf</th><th>Diğerleri</th><th>Genel</th><th>Skor</th></tr></thead>
+      <thead><tr><th>Parameter</th><th>Selected class</th><th>Others</th><th>Overall</th><th>Score</th></tr></thead>
       <tbody>${rows.map((item) => `
         <tr>
           <td>${escapeHtml(somFeatureLabel(item.feature))}</td>
@@ -3239,11 +3239,11 @@ function renderSomFeatureComparisonTable(rows) {
 }
 
 function renderSomSubgroups(groups) {
-  if (!groups.length) return `<p class="section-note">Seçili sınıf için alt davranış grubu bulunamadı.</p>`;
+  if (!groups.length) return `<p class="section-note">No sub-behavior group was found for the selected class.</p>`;
   return `
-    <div class="section-note">Alt tablo hücre bazlı ham ayrımı gösterir. Üstteki birleştirilmiş davranış tipleri ise benzer hücreleri birlikte yorumlar.</div>
+    <div class="section-note">The lower table shows the raw cell-level split. The merged behavior types above interpret similar cells together.</div>
     <table class="info-table">
-      <thead><tr><th>Tip</th><th>Hücre</th><th>Kayıt</th><th>Saflık</th><th>Hücre toplamı</th><th>Ortak sürücü skoru</th><th>Bu hücreye özgü ayırıcılar</th></tr></thead>
+      <thead><tr><th>Type</th><th>Cell</th><th>Records</th><th>Purity</th><th>Cell total</th><th>Shared-driver score</th><th>Cell-specific discriminators</th></tr></thead>
       <tbody>
         ${groups.map((group) => `
           <tr>
@@ -3265,17 +3265,17 @@ function renderSomMergedGroups(groups) {
   if (!groups.length) {
     return `
       <div class="som-distinctive">
-        <b>Birleştirilmiş davranış tipleri</b>
-        <p class="section-note">Bu seçili sınıf için ortak ayırıcı parametreleri paylaşan hücre kümeleri bulunamadı. Bu yüzden davranış tipleri zorla birleştirilmedi; aşağıdaki hücre bazlı tabloyu ayrı ayrı okumak daha doğru.</p>
+        <b>Merged behavior types</b>
+        <p class="section-note">No cell groups sharing common discriminative parameters were found for this selected class. Behavior types were therefore not forced into merged groups; the cell-level table below should be read separately.</p>
       </div>
     `;
   }
   return `
     <div class="som-distinctive">
-      <b>Birleştirilmiş davranış tipleri</b>
-      <p class="section-note">Buradaki birleşim yalnızca ortak ayırıcı parametre-durum paylaşan hücreler arasında yapılır. Yani önce ortak sürücüler aranır, sonra ancak bunları paylaşan hücreler aynı davranış tipine alınır.</p>
+      <b>Merged behavior types</b>
+      <p class="section-note">Merging is applied only between cells that share common discriminative parameter states. Shared drivers are identified first, and only cells sharing them are assigned to the same behavior type.</p>
       <table class="info-table">
-        <thead><tr><th>Birleşik tip</th><th>Hücreler</th><th>Toplam kayıt</th><th>Ort. saflık</th><th>Birleşim gücü</th><th>Ortak ayırıcılar</th></tr></thead>
+        <thead><tr><th>Merged type</th><th>Cells</th><th>Total records</th><th>Avg. purity</th><th>Merge strength</th><th>Shared discriminators</th></tr></thead>
         <tbody>
           ${groups.map((group) => `
             <tr>
@@ -3300,37 +3300,37 @@ function renderSomPureDense(summary) {
   return `
     <div class="som-pure-dense-grid">
       <div>
-        <b>En saf hücreler</b>
+        <b>Purest cells</b>
         ${renderSomCellRanking(summary.topPure)}
       </div>
       <div>
-        <b>En yoğun hücreler</b>
+        <b>Densest cells</b>
         ${renderSomCellRanking(summary.topDense)}
       </div>
     </div>
     <div class="som-distinctive">
-      <b>Birleşik üst hücre kümesi</b>
-      <p class="section-note">En saf ve en yoğun listelerinin birleşimi alınır. Bu küme, seçilen sınıfın güçlü temsilci hücre havuzunu verir.</p>
+      <b>Union of top cells</b>
+      <p class="section-note">The union of the purest and densest lists is used. This set provides the strong representative cell pool for the selected class.</p>
       ${unionCells.length ? `
         <div class="som-mini-list">
-          ${unionCells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> · ${cell.count} kayıt · saflık ${formatPercent(cell.purity)}</div>`).join("")}
+          ${unionCells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> / ${cell.count} records / purity ${formatPercent(cell.purity)}</div>`).join("")}
         </div>
-      ` : `<p class="section-note">Birleşik üst hücre kümesi oluşturulamadı.</p>`}
+      ` : `<p class="section-note">The union of top cells could not be created.</p>`}
     </div>
     <div class="som-distinctive">
-      <b>Ortak ana temsilci hücreler</b>
-      <p class="section-note">Hem en saf hem de en yoğun listesinde tekrar eden hücreler, seçilen sınıfın en karakteristik SOM hücreleri olarak yorumlanabilir.</p>
+      <b>Shared main representative cells</b>
+      <p class="section-note">Cells repeated in both the purest and densest lists can be interpreted as the most characteristic SOM cells for the selected class.</p>
       ${commonCells.length ? `
         <div class="som-mini-list">
-          ${commonCells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> · ${cell.count} kayıt · saflık ${formatPercent(cell.purity)} · saf sıra ${cell.purityRank} · yoğun sıra ${cell.densityRank}</div>`).join("")}
+          ${commonCells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> / ${cell.count} records / purity ${formatPercent(cell.purity)} / purity rank ${cell.purityRank} / density rank ${cell.densityRank}</div>`).join("")}
         </div>
-      ` : `<p class="section-note">En saf ve en yoğun listeleri arasında ortak hücre bulunamadı.</p>`}
+      ` : `<p class="section-note">No shared cell was found between the purest and densest lists.</p>`}
     </div>
     <div class="som-distinctive">
-      <b>Ortak ana temsilci hücrelere ait ortak kalan etkili parametreler</b>
+      <b>Shared influential parameters of main representative cells</b>
       ${commonRepeated.length ? `
         <table class="info-table">
-          <thead><tr><th>Parametre</th><th>Yön</th><th>Tekrar</th><th>Yorum</th></tr></thead>
+          <thead><tr><th>Parameter</th><th>Direction</th><th>Repeat</th><th>Comment</th></tr></thead>
           <tbody>${commonRepeated.map((item) => `
             <tr>
               <td>${escapeHtml(somFeatureLabel(item.feature))}</td>
@@ -3340,13 +3340,13 @@ function renderSomPureDense(summary) {
             </tr>
           `).join("")}</tbody>
         </table>
-      ` : `<p class="section-note">Ortak ana temsilci hücrelerde tekrar eden ortak sürücü bulunamadı.</p>`}
+      ` : `<p class="section-note">No repeated shared driver was found in the main representative cells.</p>`}
     </div>
     <div class="som-distinctive">
-      <b>Tüm üst hücrelerde ortak kalan etkili parametreler</b>
+      <b>Shared influential parameters across all top cells</b>
       ${summary.repeated.length ? `
         <table class="info-table">
-          <thead><tr><th>Parametre</th><th>Yön</th><th>Tekrar</th><th>Yorum</th></tr></thead>
+          <thead><tr><th>Parameter</th><th>Direction</th><th>Repeat</th><th>Comment</th></tr></thead>
           <tbody>${summary.repeated.map((item) => `
             <tr>
               <td>${escapeHtml(somFeatureLabel(item.feature))}</td>
@@ -3356,16 +3356,16 @@ function renderSomPureDense(summary) {
             </tr>
           `).join("")}</tbody>
         </table>
-      ` : `<p class="section-note">Üst hücrelerde tekrar eden ortak sürücü bulunamadı.</p>`}
+      ` : `<p class="section-note">No repeated shared driver was found in the top cells.</p>`}
     </div>
   `;
 }
 
 function renderSomCellRanking(cells) {
-  if (!cells.length) return `<p class="section-note">Hücre bulunamadı.</p>`;
+  if (!cells.length) return `<p class="section-note">No cells found.</p>`;
   return `
     <div class="som-mini-list">
-      ${cells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> · ${cell.count} kayıt · saflık ${formatPercent(cell.purity)}</div>`).join("")}
+      ${cells.map((cell) => `<div><b>${escapeHtml(cell.cell)}</b> / ${cell.count} records / purity ${formatPercent(cell.purity)}</div>`).join("")}
     </div>
   `;
 }
@@ -3479,7 +3479,7 @@ function commonDriversAcrossCells(cells, selectedProfile) {
     .sort((a, b) => Number(b.count) - Number(a.count))
     .map((item) => ({
       ...item,
-      note: selectedKeys.has(`${item.feature}:${item.direction}`) ? "Seçili sınıf genel profilinde de tekrar ediyor." : "Üst hücrelerde tekrar ediyor.",
+      note: selectedKeys.has(`${item.feature}:${item.direction}`) ? "Also repeats in the selected class overall profile." : "Repeats in top cells.",
     }));
 }
 
@@ -3823,7 +3823,7 @@ function somCellMarkup(cell, index, mode, metricKey, metric, min, max, uValues, 
   const repClass = isRepresentative ? " som-cell-representative" : isNeighbor ? " som-cell-representative-neighbor" : isOutsideRepresentative ? " som-cell-representative-outside" : "";
   if (!hitCount && mode !== "umatrix") {
     return `
-      <button class="som-cell som-cell-empty${repClass}" type="button" data-index="${index}" title="Boş hücre">
+      <button class="som-cell som-cell-empty${repClass}" type="button" data-index="${index}" title="Empty cell">
         <span>boş</span>
       </button>
     `;
@@ -3844,7 +3844,7 @@ function somCellMarkup(cell, index, mode, metricKey, metric, min, max, uValues, 
     const summary = somMetricSummary(cell, metricKey);
     const category = summary.dominant || "-";
     label = displayCategory(category);
-    sub = hitCount ? `${summary.dominant_count || 0}/${hitCount} kayıt` : "";
+    sub = hitCount ? `${summary.dominant_count || 0}/${hitCount} records` : "";
     color = categoryColor(category);
   } else {
     const targetStats = representativeView?.targetCellValueStats?.get?.(cellKey);
@@ -3852,10 +3852,10 @@ function somCellMarkup(cell, index, mode, metricKey, metric, min, max, uValues, 
     label = Number.isFinite(value) ? formatMetricValue(value, metric) : "-";
     sub = representativeView?.targetLabel && Number(targetStats?.count || 0) > 0
       ? `${targetStats.count}/${hitCount} target`
-      : hitCount ? `${hitCount} kayıt` : "";
+      : hitCount ? `${hitCount} records` : "";
     color = Number.isFinite(value) ? numericColor(value, min, max, "#eef7f4", "#0f766e") : "#f8fafc";
   }
-  const title = `(${cell.x},${cell.y}) / ${hitCount} kayıt`;
+  const title = `(${cell.x},${cell.y}) / ${hitCount} records`;
   return `
     <button class="som-cell${repClass}" type="button" data-index="${index}" style="background:${color}" title="${escapeHtml(title)}">
       <b>${escapeHtml(label)}</b>
@@ -3876,22 +3876,22 @@ function renderSomDetails(cell, metric) {
     ? "-"
     : metric.type === "category"
     ? `${escapeHtml(displayCategory(summary.dominant || "-"))} (${escapeHtml(summary.dominant_count || 0)}/${escapeHtml(cell.hit_count || 0)})`
-    : `${formatMetricValue(summary.avg, metric)} / min ${formatMetricValue(summary.min, metric)} / maks ${formatMetricValue(summary.max, metric)} / std ${formatNumber(summary.std)}`;
+    : `${formatMetricValue(summary.avg, metric)} / min ${formatMetricValue(summary.min, metric)} / max ${formatMetricValue(summary.max, metric)} / std ${formatNumber(summary.std)}`;
   somDetails.innerHTML = `
     <div class="som-detail-grid">
-      <div><span>Hücre</span><b>${escapeHtml(cell.x)}, ${escapeHtml(cell.y)}</b></div>
-      <div><span>Kayıt</span><b>${escapeHtml(cell.hit_count || 0)}</b></div>
-      <div><span>Seçili sonuç</span><b>${selectedResultText}</b></div>
-      <div><span>Ort. kat / yükseklik</span><b>${formatNumber(means.story_count)} / ${formatNumber(means.total_height)} m</b></div>
-      <div><span>Ort. kolon alanı</span><b>${formatNumber(means.column_area)} m²</b></div>
-      <div><span>Ort. hedef drift</span><b>${formatPercent(means.target_drift)}</b></div>
+      <div><span>Cell</span><b>${escapeHtml(cell.x)}, ${escapeHtml(cell.y)}</b></div>
+      <div><span>Records</span><b>${escapeHtml(cell.hit_count || 0)}</b></div>
+      <div><span>Selected result</span><b>${selectedResultText}</b></div>
+      <div><span>Avg. story / height</span><b>${formatNumber(means.story_count)} / ${formatNumber(means.total_height)} m</b></div>
+      <div><span>Avg. column area</span><b>${formatNumber(means.column_area)} m²</b></div>
+      <div><span>Avg. target drift</span><b>${formatPercent(means.target_drift)}</b></div>
     </div>
     ${renderSomMetricDistribution(summary, metric)}
     <div class="som-distinctive">
-      <b>En ayırıcı X parametreleri</b>
+      <b>Most discriminative X parameters</b>
       ${distinctive.length ? `
         <table class="info-table">
-          <thead><tr><th>Parametre</th><th>Küme ort.</th><th>Genel ort.</th><th>Yorum</th></tr></thead>
+          <thead><tr><th>Parameter</th><th>Cluster avg.</th><th>Overall avg.</th><th>Comment</th></tr></thead>
           <tbody>${distinctive.map((item) => `
             <tr>
               <td>${escapeHtml(somFeatureLabel(item.feature))}</td>
@@ -3901,7 +3901,7 @@ function renderSomDetails(cell, metric) {
             </tr>
           `).join("")}</tbody>
         </table>
-      ` : `<p class="section-note">Bu hücre için ayırıcı parametre hesaplanamadı.</p>`}
+      ` : `<p class="section-note">No discriminative parameter could be calculated for this cell.</p>`}
     </div>
     ${renderSomXSummaryTable(cell)}
     <table class="info-table">
@@ -3924,7 +3924,7 @@ function renderSomXSummaryTable(cell) {
         : formatSomFeatureValue(key, summary.avg);
       const spread = kind === "nominal"
         ? Object.entries(summary.counts || {}).map(([label, count]) => `${displayCategory(label)}: ${count}`).join(", ")
-        : `min ${formatSomFeatureValue(key, summary.min)} / maks ${formatSomFeatureValue(key, summary.max)} / std ${formatNumber(summary.std)}`;
+        : `min ${formatSomFeatureValue(key, summary.min)} / max ${formatSomFeatureValue(key, summary.max)} / std ${formatNumber(summary.std)}`;
       return `
         <tr>
           <td>${escapeHtml(somFeatureLabel(key))}</td>
@@ -3937,20 +3937,20 @@ function renderSomXSummaryTable(cell) {
     .join("");
   return `
     <div class="som-distinctive">
-      <b>Tüm seçili X parametreleri</b>
+      <b>All selected X parameters</b>
       ${rows ? `
         <table class="info-table">
-          <thead><tr><th>Parametre</th><th>Tip</th><th>Küme değeri</th><th>Dağılım / aralık</th></tr></thead>
+          <thead><tr><th>Parameter</th><th>Type</th><th>Cluster value</th><th>Distribution / range</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
-      ` : `<p class="section-note">Bu hücre için X özeti yok.</p>`}
+      ` : `<p class="section-note">No X summary is available for this cell.</p>`}
     </div>
   `;
 }
 
 function renderSomMetricDistribution(summary, metric) {
   if (!summary || Number(summary.count || 0) <= 0) {
-    return `<p class="section-note">Bu hücrede seçili sonuç için veri yok. SOM'u bu yeni sonuç metriğiyle yeniden eğitmek gerekebilir.</p>`;
+    return `<p class="section-note">No data is available for the selected result in this cell. Retraining the SOM with this result metric may be required.</p>`;
   }
   if (metric.type === "category") {
     const counts = summary.counts || {};
@@ -3960,16 +3960,16 @@ function renderSomMetricDistribution(summary, metric) {
       .join("");
     return `
       <div class="som-distinctive">
-        <b>Seçili Y dağılımı</b>
-        ${rows ? `<table class="info-table"><thead><tr><th>Sınıf</th><th>Kayıt</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="section-note">Bu hücrede dağılım yok.</p>`}
+        <b>Selected Y distribution</b>
+        ${rows ? `<table class="info-table"><thead><tr><th>Class</th><th>Records</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="section-note">No distribution in this cell.</p>`}
       </div>
     `;
   }
   return `
     <div class="som-distinctive">
-      <b>Seçili Y istatistikleri</b>
+      <b>Selected Y statistics</b>
       <table class="info-table">
-        <thead><tr><th>Ortalama</th><th>Min</th><th>Maks</th><th>Std</th></tr></thead>
+        <thead><tr><th>Average</th><th>Min</th><th>Max</th><th>Std</th></tr></thead>
         <tbody><tr>
           <td>${formatMetricValue(summary.avg, metric)}</td>
           <td>${formatMetricValue(summary.min, metric)}</td>
@@ -4100,7 +4100,7 @@ function renderCharts(models = null) {
   });
   if (!cleanRows.length) {
     chartSummary.innerHTML = "";
-    chartCanvas.innerHTML = `<div class="muted-box">Seçilen Y sonucu için kullanılabilir veri yok.</div>`;
+    chartCanvas.innerHTML = `<div class="muted-box">No usable data is available for the selected Y result.</div>`;
     return;
   }
   chartSummary.innerHTML = renderChartSummary(cleanRows, yMetric);
@@ -4260,7 +4260,7 @@ function renderChartSummary(rows, yMetric) {
   return `
     <div><span>Satır</span><b>${rows.length}</b></div>
     <div><span>${escapeHtml(yMetric.label)} ort.</span><b>${formatMetricValue(avg, yMetric)}</b></div>
-    <div><span>Min / Maks</span><b>${formatMetricValue(min, yMetric)} / ${formatMetricValue(max, yMetric)}</b></div>
+    <div><span>Min / Max</span><b>${formatMetricValue(min, yMetric)} / ${formatMetricValue(max, yMetric)}</b></div>
   `;
 }
 
@@ -4287,10 +4287,10 @@ function groupedBarSvg(rows, xMetric, yMetric, colorMetric) {
     const x = xScale.value(row.key) - xScale.bandwidth * 0.36;
     const y = yScale.value(row.value);
     const h = dims.height - dims.bottom - y;
-    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(xScale.bandwidth * 0.72).toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" fill="#176b87"><title>${escapeHtml(row.key)}: ${formatMetricValue(row.value, yMetric)} (${row.count} kayıt)</title></rect>`;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(xScale.bandwidth * 0.72).toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" fill="#176b87"><title>${escapeHtml(row.key)}: ${formatMetricValue(row.value, yMetric)} (${row.count} records)</title></rect>`;
   }).join("");
-  const title = yMetric.type === "category" ? "Grup kayıt sayısı" : "Grup ortalaması";
-  return chartSvgShell(dims, xMetric, { ...yMetric, label: yMetric.type === "category" ? "Kayıt sayısı" : yMetric.label }, xScale, yScale, bars, null, title);
+  const title = yMetric.type === "category" ? "Group record count" : "Group average";
+  return chartSvgShell(dims, xMetric, { ...yMetric, label: yMetric.type === "category" ? "Record count" : yMetric.label }, xScale, yScale, bars, null, title);
 }
 
 function heatmapSvg(rows, xMetric, yMetric, colorMetric) {
@@ -4320,7 +4320,7 @@ function heatmapSvg(rows, xMetric, yMetric, colorMetric) {
       const items = cellMap.get(`${xCat}|||${yCat}`) || [];
       const avg = items.length ? items.reduce((sum, value) => sum + value, 0) / items.length : null;
       const fill = avg === null ? "#edf1f5" : heatColor((avg - min) / Math.max(max - min, 1e-9));
-      cells.push(`<rect x="${left + xi * cellW}" y="${top + yi * cellH}" width="${cellW - 3}" height="${cellH - 3}" rx="4" fill="${fill}"><title>${escapeHtml(xCat)} / ${escapeHtml(yCat)}: ${avg === null ? "veri yok" : formatMetricValue(avg, yMetric)}</title></rect>`);
+      cells.push(`<rect x="${left + xi * cellW}" y="${top + yi * cellH}" width="${cellW - 3}" height="${cellH - 3}" rx="4" fill="${fill}"><title>${escapeHtml(xCat)} / ${escapeHtml(yCat)}: ${avg === null ? "no data" : formatMetricValue(avg, yMetric)}</title></rect>`);
       if (avg !== null) cells.push(`<text x="${left + xi * cellW + cellW / 2}" y="${top + yi * cellH + 22}" text-anchor="middle">${formatMetricValue(avg, yMetric)}</text>`);
     });
     cells.push(`<text x="${left - 10}" y="${top + yi * cellH + 22}" text-anchor="end" class="axis-label">${escapeHtml(yCat)}</text>`);
@@ -4328,7 +4328,7 @@ function heatmapSvg(rows, xMetric, yMetric, colorMetric) {
   xCats.forEach((xCat, xi) => {
     cells.push(`<text x="${left + xi * cellW + cellW / 2}" y="${top + yCats.length * cellH + 24}" text-anchor="middle" class="axis-label">${escapeHtml(xCat)}</text>`);
   });
-  const title = yMetric.type === "category" ? `${yMetric.label} kayıt yoğunluğu` : `${yMetric.label} ortalaması`;
+  const title = yMetric.type === "category" ? `${yMetric.label} record density` : `${yMetric.label} average`;
   return `
     <svg class="analysis-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Heatmap">
       <text x="16" y="24" class="chart-title">${escapeHtml(title)}</text>
@@ -4519,14 +4519,14 @@ function categoryValue(row, metric) {
 function displayCategory(value) {
   const text = String(value ?? "-").trim();
   const labels = {
-    capacity_ok: "Kapasite içinde",
-    near_capacity: "Sınıra yakın",
-    capacity_exceeded: "Kapasite üstü",
-    not_available: "Hesaplanamadı",
-    edge: "Kenar",
-    middle: "Orta",
+    capacity_ok: "Within capacity",
+    near_capacity: "Near capacity",
+    capacity_exceeded: "Capacity exceeded",
+    not_available: "Not available",
+    edge: "Edge",
+    middle: "Middle",
   };
-  return !text || text === "-" ? "Veri yok" : labels[text] || text;
+  return !text || text === "-" ? "No data" : labels[text] || text;
 }
 
 function heatColor(ratio) {
@@ -4540,7 +4540,7 @@ function heatColor(ratio) {
 function friendlyResultMessage(message) {
   const text = String(message || "");
   if (text.includes("must be real number, not list")) {
-    return "Eski sonuç okuma hatası. Kod düzeltildi; modeli yeniden analiz edince kapasite eğrisi okunacak.";
+    return "Legacy result-reading error. The code has been fixed; the capacity curve will be read after reanalyzing the model.";
   }
   return text;
 }
@@ -4566,7 +4566,7 @@ function capacitySvg(points) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
   return `
-    <svg class="capacity-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Pushover kapasite eğrisi">
+    <svg class="capacity-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Pushover capacity curve">
       <line x1="${padLeft}" y1="${height - padBottom}" x2="${width - padRight}" y2="${height - padBottom}"></line>
       <line x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${height - padBottom}"></line>
       <polyline points="${pairs}"></polyline>

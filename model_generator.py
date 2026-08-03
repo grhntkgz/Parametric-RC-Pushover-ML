@@ -2043,13 +2043,13 @@ def _write_model_preview_svg(path: Path, candidate: dict[str, Any]) -> None:
         legend = """
   <g class="legend">
     <line x1="54" y1="518" x2="92" y2="518" class="highlight x-critical"/>
-    <text x="106" y="525">X kritik</text>
+    <text x="106" y="525">X critical</text>
     <line x1="245" y1="518" x2="283" y2="518" class="highlight x-first"/>
-    <text x="297" y="525">X ilk</text>
+    <text x="297" y="525">X first</text>
     <line x1="430" y1="518" x2="468" y2="518" class="highlight y-critical"/>
-    <text x="482" y="525">Y kritik</text>
+    <text x="482" y="525">Y critical</text>
     <line x1="620" y1="518" x2="658" y2="518" class="highlight y-first"/>
-    <text x="672" y="525">Y ilk</text>
+    <text x="672" y="525">Y first</text>
   </g>""" + source_note_svg
     else:
         legend = '<text x="54" y="535" class="meta">No hinge summary</text>'
@@ -2078,7 +2078,7 @@ def _write_model_preview_svg(path: Path, candidate: dict[str, Any]) -> None:
   <text x="{margin}" y="48" class="title">{_svg_escape(_model_preview_title(candidate))}</text>
   <rect x="{margin}" y="70" width="856" height="420" rx="8" class="panel"/>
   <text x="{plan_x}" y="86" class="label">Plan</text>
-  <text x="{elev_x}" y="86" class="label">Elevasyon</text>
+  <text x="{elev_x}" y="86" class="label">Elevation</text>
   {''.join(plan_lines)}
   {''.join(elev_lines)}
   {''.join(highlight_lines)}
