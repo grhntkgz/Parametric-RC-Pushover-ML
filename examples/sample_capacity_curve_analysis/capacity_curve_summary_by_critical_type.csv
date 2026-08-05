@@ -1,0 +1,2 @@
+critical_type,count,share,avg_initial_stiffness_kn_per_m,avg_peak_base_shear_kn,avg_final_displacement_m,avg_post_peak_strength_ratio,avg_normalized_energy,avg_ductility_proxy,avg_stiffness_degradation_proxy,envelope_estimate_share
+column,50,1,97647.2,11518.6,0.618801,0.766685,0.754594,10.0317,0.244224,1

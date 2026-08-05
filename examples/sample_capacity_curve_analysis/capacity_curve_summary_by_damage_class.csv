@@ -1,0 +1,4 @@
+critical_state,count,share,avg_initial_stiffness_kn_per_m,avg_peak_base_shear_kn,avg_final_displacement_m,avg_post_peak_strength_ratio,avg_normalized_energy,avg_ductility_proxy,avg_stiffness_degradation_proxy,envelope_estimate_share
+LS-CP,41,0.82,102337,11686.4,0.674934,0.715469,0.768448,11.4214,0.187668,1
+IO-LS,6,0.12,92221.6,12626.2,0.412333,1,0.733208,4.30661,0.410965,1
+B-IO,3,0.06,44407.8,7010.6,0.264584,1,0.608025,2.48982,0.683677,1

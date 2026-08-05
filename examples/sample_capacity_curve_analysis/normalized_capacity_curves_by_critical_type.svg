@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 560" role="img" aria-label="Normalized capacity curves">
+<style>text{font-family:Arial,sans-serif;fill:#111827}.axis{stroke:#9ca3af;stroke-width:1.4}.grid{stroke:#e5e7eb}.curve{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.legend text{font-size:13px}.title{font-size:20px;font-weight:700}.label{font-size:14px;font-weight:700}</style>
+<text x="78" y="24" class="title">Mean normalized capacity curves by critical type</text>
+<line x1="78.0" y1="40" x2="78.0" y2="484" class="grid"/>
+<line x1="78" y1="484.0" x2="890" y2="484.0" class="grid"/>
+<text x="69.0" y="508" font-size="12">0.0</text>
+<text x="36" y="488.0" font-size="12">0.0</text>
+<line x1="240.4" y1="40" x2="240.4" y2="484" class="grid"/>
+<line x1="78" y1="399.4" x2="890" y2="399.4" class="grid"/>
+<text x="231.4" y="508" font-size="12">0.2</text>
+<text x="36" y="403.4" font-size="12">0.2</text>
+<line x1="402.8" y1="40" x2="402.8" y2="484" class="grid"/>
+<line x1="78" y1="314.9" x2="890" y2="314.9" class="grid"/>
+<text x="393.8" y="508" font-size="12">0.4</text>
+<text x="36" y="318.9" font-size="12">0.4</text>
+<line x1="565.2" y1="40" x2="565.2" y2="484" class="grid"/>
+<line x1="78" y1="230.3" x2="890" y2="230.3" class="grid"/>
+<text x="556.2" y="508" font-size="12">0.6</text>
+<text x="36" y="234.3" font-size="12">0.6</text>
+<line x1="727.6" y1="40" x2="727.6" y2="484" class="grid"/>
+<line x1="78" y1="145.7" x2="890" y2="145.7" class="grid"/>
+<text x="718.6" y="508" font-size="12">0.8</text>
+<text x="36" y="149.7" font-size="12">0.8</text>
+<line x1="890.0" y1="40" x2="890.0" y2="484" class="grid"/>
+<line x1="78" y1="61.1" x2="890" y2="61.1" class="grid"/>
+<text x="881.0" y="508" font-size="12">1.0</text>
+<text x="36" y="65.1" font-size="12">1.0</text>
+<line x1="78" y1="484" x2="890" y2="484" class="axis"/>
+<line x1="78" y1="40" x2="78" y2="484" class="axis"/>
+<text x="404.0" y="538" class="label">Normalized roof displacement</text>
+<text x="18" y="342.0" class="label" transform="rotate(-90 18 342.0)">Normalized base shear</text>
+<polyline points="78.0,484.0 98.3,419.3 118.6,356.7 138.9,307.8 159.2,269.6 179.5,241.5 199.8,219.5 220.1,202.6 240.4,188.3 260.7,175.7 281.0,164.5 301.3,154.9 321.6,146.4 341.9,139.1 362.2,132.4 382.5,126.2 402.8,121.0 423.1,118.3 443.4,116.6 463.7,115.3 484.0,114.6 504.3,114.4 524.6,114.5 544.9,115.1 565.2,118.6 585.5,119.2 605.8,120.2 626.1,121.4 646.4,122.7 666.7,124.5 687.0,126.9 707.3,129.4 727.6,131.8 747.9,133.6 768.2,135.5 788.5,137.6 808.8,140.4 829.1,143.4 849.4,148.3 869.7,153.9 890.0,159.8" class="curve" stroke="#176b87"><title>column / n=50</title></polyline>
+<g class="legend"><line x1="685" y1="58" x2="715" y2="58" stroke="#176b87" stroke-width="3"/><text x="724" y="62">column (n=50)</text></g>
+</svg>

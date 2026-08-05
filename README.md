@@ -33,8 +33,10 @@ The full model-generation workflow uses SAP2000 OAPI/COM on Windows. The dashboa
 |-- examples/
 |   |-- sample_metadata/
 |   |-- sample_previews/
-|   `-- sample_logs/
+|   |-- sample_logs/
+|   `-- sample_capacity_curve_analysis/
 |-- docs/
+|-- scripts/
 `-- tests/
 ```
 
@@ -64,6 +66,16 @@ http://127.0.0.1:8765
 
 The dashboard can read previously generated metadata, logs, and preview SVG files. If SAP2000 is not available, use the example files in `examples/` to review the analysis and ML workflow.
 
+## Reviewer Quick Check
+
+The non-SAP2000 parts of the repository can be checked with:
+
+```powershell
+python scripts/smoke_test.py
+```
+
+This verifies the reduced example dataset, compiles the main Python modules, and regenerates capacity-curve derived metrics from `examples/sample_metadata/` in a temporary folder. See [Reviewer Guide](docs/reviewer_guide.md) for details.
+
 ## Full SAP2000 Workflow
 
 The full generation workflow requires:
@@ -88,6 +100,7 @@ The `examples/` directory contains a reduced demonstration set:
 - metadata JSON files
 - representative model SVG previews
 - sample log files
+- sample capacity-curve derived metrics
 
 This sample set is intended for reviewers who want to inspect the dashboard and machine-learning analysis workflow without running SAP2000.
 
@@ -121,6 +134,8 @@ python capacity_curve_analysis.py --metadata-dir "path\to\metadata" --output-dir
 ```
 
 The script exports directional curve metrics, X/Y asymmetry metrics, damage-class summaries, critical-element summaries, normalized mean capacity-curve SVG figures, and a compact Markdown report. These outputs are intended for generalized interpretation of pushover response trends rather than plotting every individual capacity curve.
+
+Precomputed example outputs are included under `examples/sample_capacity_curve_analysis/`.
 
 ## Research Scope
 
