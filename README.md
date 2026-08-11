@@ -143,6 +143,8 @@ This framework is intended for synthetic parametric analysis and data-supported 
 
 The included design checks and hinge-state evaluations should be interpreted as preliminary filtering and comparative research tools.
 
-## Citation / Data Availability
+## Code and Data Availability
 
-For manuscript review, the repository can provide the source code and a reduced demonstration dataset. The complete analysis metadata and large SAP2000 result files should be archived separately, for example on Zenodo, OSF, Figshare, or an institutional repository.
+This repository provides the source code of the developed framework together with a reduced demonstration dataset that allows the dashboard, post-processing scripts, capacity-curve metric extraction, and machine-learning interpretation workflow to be reviewed without rerunning the full SAP2000 analysis campaign.
+
+The complete analysis dataset, including full metadata, representative previews, selected logs, and large SAP2000 result/model files, is intended to be archived separately in a long-term research data repository. A DOI and formal citation information will be added to this section after the archival dataset is deposited.
