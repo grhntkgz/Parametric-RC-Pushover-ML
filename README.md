@@ -108,20 +108,20 @@ This sample set is intended for reviewers who want to inspect the dashboard and 
 
 Selected dashboard screenshots are included for quick review:
 
-- [General settings 1](docs/screenshots/General%201.jpg)
-- [General settings 2](docs/screenshots/General%202.jpg)
-- [General settings 3](docs/screenshots/General%203.jpg)
-- [Geometry settings 1](docs/screenshots/Geometry%201.jpg)
-- [Geometry settings 2](docs/screenshots/Geometry%202.jpg)
-- [Geometry settings 3](docs/screenshots/Geometry%203.jpg)
-- [Material settings](docs/screenshots/Material%201.jpg)
-- [Reinforcement settings](docs/screenshots/Reinforcement%201.jpg)
-- [Foundation and soil settings](docs/screenshots/Foundation%20Soil%201.jpg)
-- [Pre-analysis checks](docs/screenshots/Checks.jpg)
-- [Pushover settings](docs/screenshots/Pushover.jpg)
-- [Generation running state](docs/screenshots/running.jpg)
-- [Behavior ML panel](docs/screenshots/Behavior%20ML.jpg)
-- [Machine learning panel](docs/screenshots/Machine%20Learning.jpg)
+- [General settings 1](screenshots/General%201.jpg)
+- [General settings 2](screenshots/General%202.jpg)
+- [General settings 3](screenshots/General%203.jpg)
+- [Geometry settings 1](screenshots/Geometry%201.jpg)
+- [Geometry settings 2](screenshots/Geometry%202.jpg)
+- [Geometry settings 3](screenshots/Geometry%203.jpg)
+- [Material settings](screenshots/Material%201.jpg)
+- [Reinforcement settings](screenshots/Reinforcement%201.jpg)
+- [Foundation and soil settings](screenshots/Foundation%20Soil%201.jpg)
+- [Pre-analysis checks](screenshots/Checks.jpg)
+- [Pushover settings](screenshots/Pushover.jpg)
+- [Generation running state](screenshots/running.jpg)
+- [Behavior ML panel](screenshots/Behavior%20ML.jpg)
+- [Machine learning panel](screenshots/Machine%20Learning.jpg)
 
 Representative model SVG previews are provided in `examples/sample_previews/`.
 
